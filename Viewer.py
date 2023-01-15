@@ -35,7 +35,7 @@ class Viewer(QWidget):
 
         self.changes = 0
         self.maxChanges = 0
-        self.previewHistory = [[0, 1, 0, 0, 0]]
+        self.previewHistory = [[0, 1, 0, 0, 0, 0]]
 
 
     def dragEnterEvent(self, event):
@@ -103,20 +103,6 @@ class Viewer(QWidget):
     def colorReduce(self, count):
 
         img = cv2.imread(os.getcwd() + "\pixelart.jpg")
-
-        # (h, w) = img.shape[:2]
-
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-
-        # img = img.reshape((img.shape[0] * img.shape[1], 3))
-
-        # kmeans = MiniBatchKMeans(init ='k-means++', n_clusters = count, batch_size = 32, n_init = 10, max_no_improvement = 10, verbose = 0)
-        # labels = kmeans.fit_predict(img)
-
-        # pixelart = kmeans.cluster_centers_.astype("uint8")[labels]
-        # pixelart = pixelart.reshape((h, w, 3))
-        # pixelart = cv2.cvtColor(pixelart, cv2.COLOR_LAB2BGR)
-
         imgf = np.float32(img).reshape(-1, 3)
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
@@ -172,3 +158,16 @@ class Viewer(QWidget):
         smoothed = cv2.medianBlur(img, int(factor))
 
         cv2.imwrite("pixelart.jpg", smoothed)
+
+    def CreateOutline(self, thickness):
+
+        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY)
+
+        contours, hierarchy = cv2.findContours(image = thresh, mode = cv2.RETR_TREE, method = cv2.CHAIN_APPROX_NONE)
+                                      
+        cv2.drawContours(image = img, contours = contours, contourIdx = -1, color = (0, 0, 0), thickness = thickness, lineType = cv2.LINE_AA)
+
+        cv2.imwrite("pixelart.jpg", img)

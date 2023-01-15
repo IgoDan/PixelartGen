@@ -46,12 +46,25 @@ class Ui_MainWindow(QMainWindow):
         resetAction = self.editMenu.addAction("Reset")
         resetAction.triggered.connect(self.Reset)
 
+        #MENU BAR - EDIT
+        self.editMenu = menuBar.addMenu("&Edit")
+
+        undoAction = self.editMenu.addAction("Undo")
+        undoAction.triggered.connect(self.Undo)
+
+        redoAction = self.editMenu.addAction("Redo")
+        redoAction.triggered.connect(self.Redo)
+
+        resetAction = self.editMenu.addAction("Reset")
+        resetAction.triggered.connect(self.Reset)
+
         #PIXELATE FACTOR SLIDER
         self.sliderPixelate = Slider(self, 1, 64, 1, "Pikselizacja")
         self.sliderPixelate.setObjectName("pikselizacja")
         self.sliderPixelate.setGeometry(QRect(200, 20, 300, 60))
 
         self.sliderPixelate.slider.valueChanged.connect(self.ApplyEffects)
+        self.sliderPixelate.slider.sliderReleased.connect(self.SaveHistory)
         self.sliderPixelate.slider.sliderReleased.connect(self.SaveHistory)
 
         #RESIZE CHECKBOX
@@ -68,6 +81,7 @@ class Ui_MainWindow(QMainWindow):
 
         self.sliderColorcount.slider.sliderReleased.connect(self.ApplyEffects)
         self.sliderColorcount.slider.sliderReleased.connect(self.SaveHistory)
+        self.sliderColorcount.slider.sliderReleased.connect(self.SaveHistory)
 
         #BRIGHTNESS SLIDER
         self.sliderBrightness = Slider(self, -10, 10, 0, "Jasność")
@@ -76,6 +90,7 @@ class Ui_MainWindow(QMainWindow):
 
         self.sliderBrightness.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderBrightness.slider.sliderReleased.connect(self.SaveHistory)
+        self.sliderBrightness.slider.sliderReleased.connect(self.SaveHistory)
 
         #CONTRAST SLIDER
         self.sliderContrast = Slider(self, -10, 10, 0, "Kontrast")
@@ -83,6 +98,7 @@ class Ui_MainWindow(QMainWindow):
         self.sliderContrast.setGeometry(QRect(200, 180, 300, 60))
 
         self.sliderContrast.slider.valueChanged.connect(self.ApplyEffects)
+        self.sliderContrast.slider.sliderReleased.connect(self.SaveHistory)
         self.sliderContrast.slider.sliderReleased.connect(self.SaveHistory)
 
 
@@ -93,12 +109,33 @@ class Ui_MainWindow(QMainWindow):
 
         self.sliderSmoothing.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderSmoothing.slider.sliderReleased.connect(self.SaveHistory)
+        self.sliderSmoothing.slider.sliderReleased.connect(self.SaveHistory)
+
+        #OUTLINE CHECKBOX
+        self.checkboxOutline = QCheckBox(parent = self,text = "Dodaj kontur")
+        self.checkboxOutline.setGeometry(QRect(200, 300, 300, 60))
+        self.checkboxOutline.show()
+
+        self.checkboxOutline.stateChanged.connect(self.ApplyEffects)
+        self.checkboxOutline.stateChanged.connect(self.ShowOutlineSlider)
+
+        #OUTLINE THICKNESS SLIDER
+        self.sliderOutline = Slider(self, 1, 8, 1, "Grubość konturu")
+        self.sliderOutline.setObjectName("kontur")
+        self.sliderOutline.setGeometry(QRect(200, 340, 300, 60))
+
+        self.sliderOutline.slider.valueChanged.connect(self.ApplyEffects)
+        self.sliderOutline.slider.sliderReleased.connect(self.SaveHistory)
+
+        self.sliderOutline.hide()
 
         #VIEWER
         self.viewer = Viewer(self)
         self.viewer.setObjectName("viewer")
         self.viewer.setGeometry(QRect(660, 50, 440, 650))
 
+        #STATUSBAR
+        self.setStatusBar(QStatusBar(self))
         #STATUSBAR
         self.setStatusBar(QStatusBar(self))
 
@@ -127,6 +164,9 @@ class Ui_MainWindow(QMainWindow):
         if self.sliderSmoothing.slider.value() != 0:
             self.viewer.SmoothImage(self.sliderSmoothing.slider.value())
 
+        if self.checkboxOutline.isChecked():
+            self.viewer.CreateOutline(self.sliderOutline.slider.value())
+
         if self.sliderPixelate.slider.value() != 1:
             self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())
 
@@ -139,6 +179,7 @@ class Ui_MainWindow(QMainWindow):
         if self.sliderContrast.slider.value() != 0:
             self.viewer.ChangeContrast(self.sliderContrast.slider.value())
 
+
         self.viewer.setPreview()
 
     def SaveHistory(self):
@@ -148,7 +189,8 @@ class Ui_MainWindow(QMainWindow):
                                                                self.sliderPixelate.slider.value(),
                                                                self.sliderColorcount.slider.value(),
                                                                self.sliderBrightness.slider.value(),
-                                                               self.sliderContrast.slider.value()]
+                                                               self.sliderContrast.slider.value(),
+                                                               self.sliderOutline.slider.value()]
 
         else:
             self.viewer.changes += 1
@@ -157,7 +199,8 @@ class Ui_MainWindow(QMainWindow):
              self.sliderPixelate.slider.value(),
              self.sliderColorcount.slider.value(),
              self.sliderBrightness.slider.value(),
-             self.sliderContrast.slider.value()])
+             self.sliderContrast.slider.value(),
+             self.sliderOutline.slider.value()])
 
         if self.viewer.changes >= self.viewer.maxChanges:
             self.viewer.maxChanges = self.viewer.changes
@@ -186,6 +229,9 @@ class Ui_MainWindow(QMainWindow):
             self.sliderContrast.slider.setValue(params[4])
             self.sliderContrast.slider.update()
 
+            self.sliderOutline.slider.setValue(params[5])
+            self.sliderOutline.slider.update()
+
             self.ApplyEffects()
 
         else:
@@ -202,6 +248,7 @@ class Ui_MainWindow(QMainWindow):
             self.sliderColorcount.slider.setValue(params[2])
             self.sliderBrightness.slider.setValue(params[3])
             self.sliderContrast.slider.setValue(params[4])
+            self.sliderOutline.slider.setValue(params[5])
 
             self.ApplyEffects()
 
@@ -211,17 +258,18 @@ class Ui_MainWindow(QMainWindow):
     def Reset(self):
         if self.viewer.changes < self.viewer.maxChanges:
             self.viewer.changes += 1
-            self.viewer.previewHistory[self.viewer.changes] = [0, 1, 0, 0, 0]
+            self.viewer.previewHistory[self.viewer.changes] = [0, 1, 0, 0, 0, 0]
 
         else:
             self.viewer.changes += 1
-            self.viewer.previewHistory.append([0, 1, 0, 0, 0])
+            self.viewer.previewHistory.append([0, 1, 0, 0, 0, 0])
 
         self.sliderSmoothing.slider.setValue(0)
         self.sliderPixelate.slider.setValue(1)
         self.sliderColorcount.slider.setValue(0)
         self.sliderBrightness.slider.setValue(0)
         self.sliderContrast.slider.setValue(0)
+        self.sliderOutline.slider.setValue(0)
 
         self.ApplyEffects()
 
@@ -229,3 +277,9 @@ class Ui_MainWindow(QMainWindow):
             self.viewer.maxChanges = self.viewer.changes
 
         print(self.viewer.previewHistory)
+
+    def ShowOutlineSlider(self):
+        if self.checkboxOutline.isChecked():
+            self.sliderOutline.show()
+        else:
+            self.sliderOutline.hide()
