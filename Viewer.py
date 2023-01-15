@@ -33,6 +33,11 @@ class Viewer(QWidget):
 
         self.show()
 
+        self.changes = 0
+        self.maxChanges = 0
+        self.previewHistory = [[0, 1, 0, 0, 0]]
+
+
     def dragEnterEvent(self, event):
         if event.mimeData().hasImage:
 
@@ -112,18 +117,15 @@ class Viewer(QWidget):
         # pixelart = pixelart.reshape((h, w, 3))
         # pixelart = cv2.cvtColor(pixelart, cv2.COLOR_LAB2BGR)
 
-
         imgf = np.float32(img).reshape(-1, 3)
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
-        compactness, label, center = cv2.kmeans(imgf,count,None,criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+        compactness, label, center = cv2.kmeans(imgf, count, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
 
         center = np.uint8(center)
         pixelart = center[label.flatten()]
 
         pixelart = pixelart.reshape(img.shape)
-
-        #cv2.waitKey(0)
 
         cv2.imwrite("pixelart.jpg", pixelart)
 
