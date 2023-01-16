@@ -16,13 +16,13 @@ class Viewer(QWidget):
         self.mainLayout = QVBoxLayout()
 
         self.source = QLabel()
-        self.source.setGeometry(QRect(700, 50, 400, 300))
+        self.source.setGeometry(QRect(700, 50, 440, 330))
         self.source.setAlignment(Qt.AlignCenter)
         self.source.setText('\n\n Upuść zdjęcie \n\n')
         self.source.setStyleSheet('''QLabel{border: 4px dashed #aaa}''')
 
         self.preview = QLabel()
-        self.preview.setGeometry(QRect(700, 380, 400, 300))
+        self.preview.setGeometry(QRect(700, 380, 440, 330))
         self.preview.setAlignment(Qt.AlignCenter)
         self.preview.setText('\n\n Tu wyświetli się podgląd \n\n')
         self.preview.setStyleSheet('''QLabel{border: 4px dashed #aaa}''')
@@ -35,7 +35,7 @@ class Viewer(QWidget):
 
         self.changes = 0
         self.maxChanges = 0
-        self.previewHistory = [[0, 1, 0, 0, 0, 0]]
+        self.previewHistory = [[0, 1, 0, 0, 0, 0, 0]]
 
 
     def dragEnterEvent(self, event):
@@ -171,3 +171,17 @@ class Viewer(QWidget):
         cv2.drawContours(image = img, contours = contours, contourIdx = -1, color = (0, 0, 0), thickness = thickness, lineType = cv2.LINE_AA)
 
         cv2.imwrite("pixelart.jpg", img)
+
+    def ChangeSaturation(self, value):
+
+        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        s = hsv[:,:,1] * (1 + value / 10)
+        s = np.clip(s, 0, 255)
+        hsv[:,:,1] = s
+
+        saturated = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+        cv2.imwrite("pixelart.jpg", saturated)

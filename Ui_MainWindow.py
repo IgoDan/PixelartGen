@@ -90,7 +90,7 @@ class Ui_MainWindow(QMainWindow):
         self.sliderColorcount.slider.sliderReleased.connect(self.SaveHistory)
 
         #COLOR PALETTE OPEN BUTTON
-        self.paletteButton = QPushButton("Wybierz plik")
+        self.paletteButton = QPushButton(self, "Wybierz plik")
         self.paletteButton.setGeometry(QRect(100, 260, 300, 60))
 
         self.paletteButton.clicked.connect(self.OpenPaletteFile)
@@ -116,7 +116,12 @@ class Ui_MainWindow(QMainWindow):
         self.sliderContrast.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderContrast.slider.sliderReleased.connect(self.SaveHistory)
 
-        #TODO SATURATION SLIDER
+        #SATURATION SLIDER
+        self.sliderSaturation = Slider(self, -10, 10, 0, "Nasycenie")
+        self.sliderSaturation.setGeometry(QRect(100, 410, 300, 60))
+
+        self.sliderSaturation.slider.valueChanged.connect(self.ApplyEffects)
+        self.sliderSaturation.slider.sliderReleased.connect(self.SaveHistory)
 
         #CATEGORY 3
         self.qframe1 = QFrame(parent = self)
@@ -144,7 +149,7 @@ class Ui_MainWindow(QMainWindow):
 
         #VIEWER
         self.viewer = Viewer(self)
-        self.viewer.setGeometry(QRect(500, 70, 440, 650))
+        self.viewer.setGeometry(QRect(500, 50, 480, 680))
 
         #STATUSBAR
         self.setStatusBar(QStatusBar(self))
@@ -189,6 +194,9 @@ class Ui_MainWindow(QMainWindow):
         if self.sliderContrast.slider.value() != 0:
             self.viewer.ChangeContrast(self.sliderContrast.slider.value())
 
+        if self.sliderSaturation.slider.value() != 0:
+            self.viewer.ChangeSaturation(self.sliderSaturation.slider.value())
+
 
         self.viewer.setPreview()
 
@@ -200,7 +208,8 @@ class Ui_MainWindow(QMainWindow):
                                                                self.sliderColorcount.slider.value(),
                                                                self.sliderBrightness.slider.value(),
                                                                self.sliderContrast.slider.value(),
-                                                               self.sliderOutline.slider.value()]
+                                                               self.sliderOutline.slider.value(),
+                                                               self.sliderSaturation.slider.value()]
 
         else:
             self.viewer.changes += 1
@@ -210,7 +219,8 @@ class Ui_MainWindow(QMainWindow):
              self.sliderColorcount.slider.value(),
              self.sliderBrightness.slider.value(),
              self.sliderContrast.slider.value(),
-             self.sliderOutline.slider.value()])
+             self.sliderOutline.slider.value(),
+             self.sliderSaturation.slider.value()])
 
         if self.viewer.changes >= self.viewer.maxChanges:
             self.viewer.maxChanges = self.viewer.changes
@@ -242,6 +252,9 @@ class Ui_MainWindow(QMainWindow):
             self.sliderOutline.slider.setValue(params[5])
             self.sliderOutline.slider.update()
 
+            self.sliderSaturation.slider.setValue(params[6])
+            self.sliderSaturation.slider.update()
+
             self.ApplyEffects()
 
         else:
@@ -259,6 +272,7 @@ class Ui_MainWindow(QMainWindow):
             self.sliderBrightness.slider.setValue(params[3])
             self.sliderContrast.slider.setValue(params[4])
             self.sliderOutline.slider.setValue(params[5])
+            self.sliderSaturation.slider.setValue(params[6])
 
             self.ApplyEffects()
 
@@ -268,11 +282,11 @@ class Ui_MainWindow(QMainWindow):
     def Reset(self):
         if self.viewer.changes < self.viewer.maxChanges:
             self.viewer.changes += 1
-            self.viewer.previewHistory[self.viewer.changes] = [0, 1, 0, 0, 0, 0]
+            self.viewer.previewHistory[self.viewer.changes] = [0, 1, 0, 0, 0, 0, 0]
 
         else:
             self.viewer.changes += 1
-            self.viewer.previewHistory.append([0, 1, 0, 0, 0, 0])
+            self.viewer.previewHistory.append([0, 1, 0, 0, 0, 0, 0])
 
         self.sliderSmoothing.slider.setValue(0)
         self.sliderPixelate.slider.setValue(1)
@@ -280,6 +294,7 @@ class Ui_MainWindow(QMainWindow):
         self.sliderBrightness.slider.setValue(0)
         self.sliderContrast.slider.setValue(0)
         self.sliderOutline.slider.setValue(0)
+        self.sliderSaturation.slider.setValue(0)
 
         self.ApplyEffects()
 
@@ -295,7 +310,12 @@ class Ui_MainWindow(QMainWindow):
             self.sliderOutline.setEnabled(False)
 
     def ModeChange(self, index):
-        pass
+        if index == 0:
+            self.sliderColorcount.show()
+            self.paletteButton.hide()
+        else:
+            self.sliderColorcount.hide()
+            self.paletteButton.show()
 
     def OpenPaletteFile(self):
         pass
