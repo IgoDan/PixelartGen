@@ -1,11 +1,9 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QMessageBox
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPixmap, QImage
 import cv2, numpy as np
 import imghdr
 import os
-
-from sklearn.cluster import MiniBatchKMeans
 
 class Viewer(QWidget):
 
@@ -48,6 +46,7 @@ class Viewer(QWidget):
 
     def dropEvent(self, event):
         if event.mimeData().hasImage:
+
             event.setDropAction(Qt.CopyAction)
             file_path = event.mimeData().urls()[0].toLocalFile()
             self.setImage(file_path)

@@ -1,7 +1,7 @@
 import os, cv2
 
 from PySide6.QtCore import QRect, QEvent
-from PySide6.QtWidgets import  QWidget, QLabel, QVBoxLayout, QMenuBar, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame
+from PySide6.QtWidgets import  QWidget, QLabel, QVBoxLayout, QMenuBar, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame, QMessageBox
 
 from Viewer import Viewer
 from Slider import Slider
@@ -48,28 +48,28 @@ class Ui_MainWindow(QMainWindow):
 
         #PIXELATE FACTOR SLIDER
         self.sliderPixelate = Slider(self, 1, 64, 1, "Pikselizacja")
-        self.sliderPixelate.setGeometry(QRect(100, 60, 300, 60))
+        self.sliderPixelate.setGeometry(QRect(80, 60, 350, 60))
 
         self.sliderPixelate.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderPixelate.slider.sliderReleased.connect(self.SaveHistory)
 
         #RESIZE CHECKBOX
         self.checkboxResize = QCheckBox(parent = self,text = "Zmniejsz realne wymiary zdjęcia")
-        self.checkboxResize.setGeometry(QRect(110, 100, 300, 60))
+        self.checkboxResize.setGeometry(QRect(100, 100, 350, 60))
         self.checkboxResize.show()
 
         self.checkboxResize.stateChanged.connect(self.ApplyEffects)
 
         #SMOOTHING SLIDER
         self.sliderSmoothing = Slider(self, 0, 8, 0, "Wygładzanie")
-        self.sliderSmoothing.setGeometry(QRect(100, 140, 300, 60))
+        self.sliderSmoothing.setGeometry(QRect(80, 140, 350, 60))
 
         self.sliderSmoothing.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderSmoothing.slider.sliderReleased.connect(self.SaveHistory)
 
         #CATEGORY 2 FRAME
         self.qframe1 = QFrame(parent = self)
-        self.qframe1.setGeometry(QRect(100, 180, 300, 50))
+        self.qframe1.setGeometry(QRect(80, 180, 350, 50))
         self.qframe1.setFrameShape(QFrame.HLine)
         self.qframe1.setFrameShadow(QFrame.Sunken)
         self.qframe1.show()
@@ -77,62 +77,68 @@ class Ui_MainWindow(QMainWindow):
         #COLOR REDUCE MODE COMBOBOX
         self.modeComboBox = QComboBox(parent = self)
         self.modeComboBox.addItems(["Adaptywny", "Z pliku"])
-        self.modeComboBox.setGeometry(QRect(100, 220, 300, 40))
+        self.modeComboBox.setGeometry(QRect(80, 220, 350, 40))
         self.modeComboBox.show()
 
         self.modeComboBox.currentIndexChanged.connect(self.ModeChange)
 
         #COLORS REDUCE SLIDER
         self.sliderColorcount = Slider(self, 0, 16, 0, "Redukcja barw")
-        self.sliderColorcount.setGeometry(QRect(100, 260, 300, 60))
+        self.sliderColorcount.setGeometry(QRect(80, 260, 350, 60))
 
         self.sliderColorcount.slider.sliderReleased.connect(self.ApplyEffects)
         self.sliderColorcount.slider.sliderReleased.connect(self.SaveHistory)
 
         #COLOR PALETTE OPEN BUTTON
-        self.paletteButton = QPushButton(self, "Wybierz plik")
-        self.paletteButton.setGeometry(QRect(100, 260, 300, 60))
+        self.paletteButton = QPushButton("Wybierz plik", self)
+        self.paletteButton.setGeometry(QRect(80, 265, 350, 25))
 
         self.paletteButton.clicked.connect(self.OpenPaletteFile)
 
+        #COLOR PALETTE LABEL
+        self.paletteLabel = QLabel(parent = self)
+        self.paletteLabel.setFrameStyle(QFrame.Panel)
+        self.paletteLabel.setText("Źródło:")
+        self.paletteLabel.setGeometry(QRect(80, 295, 350, 20))
+
         #CATEGORY 3
         self.qframe1 = QFrame(parent = self)
-        self.qframe1.setGeometry(QRect(100, 300, 300, 50))
+        self.qframe1.setGeometry(QRect(80, 300, 350, 50))
         self.qframe1.setFrameShape(QFrame.HLine)
         self.qframe1.setFrameShadow(QFrame.Sunken)
         self.qframe1.show()
 
         #BRIGHTNESS SLIDER
         self.sliderBrightness = Slider(self, -10, 10, 0, "Jasność")
-        self.sliderBrightness.setGeometry(QRect(100, 330, 300, 60))
+        self.sliderBrightness.setGeometry(QRect(80, 330, 350, 60))
 
         self.sliderBrightness.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderBrightness.slider.sliderReleased.connect(self.SaveHistory)
 
         #CONTRAST SLIDER
         self.sliderContrast = Slider(self, -10, 10, 0, "Kontrast")
-        self.sliderContrast.setGeometry(QRect(100, 370, 300, 60))
+        self.sliderContrast.setGeometry(QRect(80, 370, 350, 60))
 
         self.sliderContrast.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderContrast.slider.sliderReleased.connect(self.SaveHistory)
 
         #SATURATION SLIDER
         self.sliderSaturation = Slider(self, -10, 10, 0, "Nasycenie")
-        self.sliderSaturation.setGeometry(QRect(100, 410, 300, 60))
+        self.sliderSaturation.setGeometry(QRect(80, 410, 350, 60))
 
         self.sliderSaturation.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderSaturation.slider.sliderReleased.connect(self.SaveHistory)
 
         #CATEGORY 3
         self.qframe1 = QFrame(parent = self)
-        self.qframe1.setGeometry(QRect(100, 450, 300, 50))
+        self.qframe1.setGeometry(QRect(80, 450, 350, 50))
         self.qframe1.setFrameShape(QFrame.HLine)
         self.qframe1.setFrameShadow(QFrame.Sunken)
         self.qframe1.show()
 
         #OUTLINE CHECKBOX
         self.checkboxOutline = QCheckBox(parent = self,text = "Dodaj kontur")
-        self.checkboxOutline.setGeometry(QRect(110, 480, 300, 60))
+        self.checkboxOutline.setGeometry(QRect(100, 480, 350, 60))
         self.checkboxOutline.show()
 
         self.checkboxOutline.stateChanged.connect(self.ApplyEffects)
@@ -140,7 +146,7 @@ class Ui_MainWindow(QMainWindow):
 
         #OUTLINE THICKNESS SLIDER
         self.sliderOutline = Slider(self, 1, 8, 1, "Grubość konturu")
-        self.sliderOutline.setGeometry(QRect(100, 520, 300, 60))
+        self.sliderOutline.setGeometry(QRect(80, 520, 350, 60))
 
         self.sliderOutline.slider.valueChanged.connect(self.ApplyEffects)
         self.sliderOutline.slider.sliderReleased.connect(self.SaveHistory)
@@ -149,11 +155,22 @@ class Ui_MainWindow(QMainWindow):
 
         #VIEWER
         self.viewer = Viewer(self)
-        self.viewer.setGeometry(QRect(500, 50, 480, 680))
+        self.viewer.setGeometry(QRect(480, 50, 480, 680))
 
         #STATUSBAR
         self.setStatusBar(QStatusBar(self))
 
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Wyłączenie programu',
+                                     "Czy na pewno chcesz zakończyć działanie programu?", QMessageBox.Yes |
+                                     QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            os.remove("source.jpg")
+            os.remove("pixelart.jpg")
+            event.accept()
+        else:
+            event.ignore()
 
     #OPEN IMAGE FROM FILE
     def OpenImage(self):
@@ -196,7 +213,6 @@ class Ui_MainWindow(QMainWindow):
 
         if self.sliderSaturation.slider.value() != 0:
             self.viewer.ChangeSaturation(self.sliderSaturation.slider.value())
-
 
         self.viewer.setPreview()
 
@@ -313,9 +329,11 @@ class Ui_MainWindow(QMainWindow):
         if index == 0:
             self.sliderColorcount.show()
             self.paletteButton.hide()
+            self.paletteLabel.hide()
         else:
             self.sliderColorcount.hide()
             self.paletteButton.show()
+            self.paletteLabel.show()
 
     def OpenPaletteFile(self):
         pass
