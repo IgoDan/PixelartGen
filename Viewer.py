@@ -164,7 +164,7 @@ class Viewer(QWidget):
         img = cv2.imread(os.getcwd() + "\pixelart.jpg")
 
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY)
+        ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
 
         contours, hierarchy = cv2.findContours(image = thresh, mode = cv2.RETR_TREE, method = cv2.CHAIN_APPROX_NONE)
                                       
