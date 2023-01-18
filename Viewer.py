@@ -50,6 +50,8 @@ class Viewer(QWidget):
             event.setDropAction(Qt.CopyAction)
             file_path = event.mimeData().urls()[0].toLocalFile()
             self.setImage(file_path)
+            self.copySource()
+            self.parent().ApplyEffects()
 
             event.accept()
         else:
@@ -70,10 +72,10 @@ class Viewer(QWidget):
             self.preview.setPixmap(img.scaledToWidth(self.source.width() - 10))
 
         self.src = cv2.imread(file_path)
-        cv2.imwrite("source.jpg", self.src)
+        cv2.imwrite("source.png", self.src)
 
     def setPreview(self):
-        img = QPixmap(os.getcwd() + "\pixelart.jpg")
+        img = QPixmap(os.getcwd() + "\pixelart.png")
 
         w, h = img.width(), img.height()
 
@@ -83,12 +85,12 @@ class Viewer(QWidget):
             self.preview.setPixmap(img.scaledToWidth(self.source.width() - 10))
 
     def copySource(self):
-        img = cv2.imread(os.getcwd() + "\source.jpg")
-        cv2.imwrite("pixelart.jpg", img)
+        img = cv2.imread(os.getcwd() + "\source.png")
+        cv2.imwrite("pixelart.png", img)
 
     def Pixelate(self, factor, resize):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         height, width = img.shape[:2]
 
@@ -97,11 +99,11 @@ class Viewer(QWidget):
         if resize == False:
             pixelart = cv2.resize(pixelart, (width, height), interpolation=cv2.INTER_NEAREST)
 
-        cv2.imwrite("pixelart.jpg", pixelart)
+        cv2.imwrite("pixelart.png", pixelart)
 
     def colorReduce(self, count):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
         imgf = np.float32(img).reshape(-1, 3)
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
@@ -112,11 +114,11 @@ class Viewer(QWidget):
 
         pixelart = pixelart.reshape(img.shape)
 
-        cv2.imwrite("pixelart.jpg", pixelart)
+        cv2.imwrite("pixelart.png", pixelart)
 
     def ChangeBrightness(self, brightness):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
         brightness = brightness * 12.8
 
         if brightness != 0:
@@ -132,11 +134,11 @@ class Viewer(QWidget):
 
             img = cv2.addWeighted(img, alphaBrightness, img, 0, gammaBrightness)
 
-        cv2.imwrite("pixelart.jpg", img)
+        cv2.imwrite("pixelart.png", img)
 
     def ChangeContrast(self, contrast):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
         contrast = contrast * 6.4
 
         if contrast != 0:
@@ -146,21 +148,21 @@ class Viewer(QWidget):
 
             img = cv2.addWeighted(img, alphaContrast, img, 0, gammaContrast)
 
-        cv2.imwrite("pixelart.jpg", img)
+        cv2.imwrite("pixelart.png", img)
 
     def SmoothImage(self, factor):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         factor = 2 * factor - 1
 
         smoothed = cv2.medianBlur(img, int(factor))
 
-        cv2.imwrite("pixelart.jpg", smoothed)
+        cv2.imwrite("pixelart.png", smoothed)
 
     def CreateOutline(self, thickness):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
@@ -169,11 +171,11 @@ class Viewer(QWidget):
                                       
         cv2.drawContours(image = img, contours = contours, contourIdx = -1, color = (0, 0, 0), thickness = thickness, lineType = cv2.LINE_AA)
 
-        cv2.imwrite("pixelart.jpg", img)
+        cv2.imwrite("pixelart.png", img)
 
     def ChangeSaturation(self, value):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -183,4 +185,4 @@ class Viewer(QWidget):
 
         saturated = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
-        cv2.imwrite("pixelart.jpg", saturated)
+        cv2.imwrite("pixelart.png", saturated)

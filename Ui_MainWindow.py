@@ -166,8 +166,8 @@ class Ui_MainWindow(QMainWindow):
                                      QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            os.remove("source.jpg")
-            os.remove("pixelart.jpg")
+            os.remove("source.png")
+            os.remove("pixelart.png")
             event.accept()
         else:
             event.ignore()
@@ -180,8 +180,8 @@ class Ui_MainWindow(QMainWindow):
 
     #SAVE IMAGE TO FILE
     def SaveImage(self):
-        img = cv2.imread(os.getcwd() + "\pixelart.jpg")
-        saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.jpg", "Image Files (*.png *.jpg *.bmp)")
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
+        saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
         print(saveLocation)
         cv2.imwrite(saveLocation[0], img)
 
@@ -190,6 +190,9 @@ class Ui_MainWindow(QMainWindow):
         self.app.quit()
 
     def ApplyEffects(self):
+
+        if not os.path.exists("source.png"):
+            return
 
         self.viewer.copySource()
 
@@ -217,6 +220,10 @@ class Ui_MainWindow(QMainWindow):
         self.viewer.setPreview()
 
     def SaveHistory(self):
+
+        if not os.path.exists("source.png"):
+            return
+
         if self.viewer.changes < self.viewer.maxChanges:
             self.viewer.changes += 1
             self.viewer.previewHistory[self.viewer.changes] = [self.sliderSmoothing.slider.value(),
