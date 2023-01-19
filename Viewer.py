@@ -186,3 +186,40 @@ class Viewer(QWidget):
         saturated = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
         cv2.imwrite("pixelart.png", saturated)
+
+    def ChangePalette(self, dir):
+
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
+        pal_file = open(dir, "r")
+
+        pal = []
+
+        for line in pal_file:
+            if line[0:2] != "FF":
+                continue
+            else:
+                pal.append(line[2:-1])
+            
+        pal_rgb = []
+
+        for hex in pal:
+            pal_rgb.append([int("0x" + hex[0:2], 0), int("0x" + hex[2:4], 0), int("0x" + hex[4:6], 0)])
+
+
+        h = img.shape[0]
+        w = img.shape[1]
+
+        for y in range(0, h):
+            for x in range(0, w):
+                r,g,b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
+                dif = []
+                for clr in pal_rgb:
+                    dif.append(sum([abs(r - clr[0]), abs(g - clr[1]), abs(b - clr[2])]))
+
+                min_index = dif.index(min(dif))
+
+                img[y, x, 2], img[y, x, 1], img[y, x, 0] = pal_rgb[min_index][0], pal_rgb[min_index][1], pal_rgb[min_index][2]
+
+        cv2.imwrite("pixelart.png", img)
+
+        self.setPreview()

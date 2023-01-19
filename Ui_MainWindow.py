@@ -100,6 +100,7 @@ class Ui_MainWindow(QMainWindow):
         self.paletteLabel.setFrameStyle(QFrame.Panel)
         self.paletteLabel.setText("Źródło:")
         self.paletteLabel.setGeometry(QRect(80, 295, 350, 20))
+        self.paletteLabel.setText("")
 
         #CATEGORY 3
         self.qframe1 = QFrame(parent = self)
@@ -161,6 +162,7 @@ class Ui_MainWindow(QMainWindow):
         self.setStatusBar(QStatusBar(self))
 
     def closeEvent(self, event):
+
         reply = QMessageBox.question(self, 'Wyłączenie programu',
                                      "Czy na pewno chcesz zakończyć działanie programu?", QMessageBox.Yes |
                                      QMessageBox.No, QMessageBox.No)
@@ -174,12 +176,14 @@ class Ui_MainWindow(QMainWindow):
 
     #OPEN IMAGE FROM FILE
     def OpenImage(self):
+
         openLocation = QFileDialog.getOpenFileName()
         print(openLocation)
         self.viewer.setImage(openLocation[0])
 
     #SAVE IMAGE TO FILE
     def SaveImage(self):
+
         img = cv2.imread(os.getcwd() + "\pixelart.png")
         saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
         print(saveLocation)
@@ -187,12 +191,13 @@ class Ui_MainWindow(QMainWindow):
 
     #CLOSE APP
     def QuitApp(self):
+
         self.app.quit()
 
     def ApplyEffects(self):
 
         if not os.path.exists("source.png"):
-            return
+            return False
 
         self.viewer.copySource()
 
@@ -205,7 +210,7 @@ class Ui_MainWindow(QMainWindow):
         if self.sliderPixelate.slider.value() != 1:
             self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())
 
-        if self.sliderColorcount.slider.value() != 0:
+        if self.sliderColorcount.slider.value() != 0 and self.modeComboBox.currentIndex() == 0:
             self.viewer.colorReduce(self.sliderColorcount.slider.value())
 
         if self.sliderBrightness.slider.value() != 0:
@@ -217,7 +222,13 @@ class Ui_MainWindow(QMainWindow):
         if self.sliderSaturation.slider.value() != 0:
             self.viewer.ChangeSaturation(self.sliderSaturation.slider.value())
 
+        if self.modeComboBox.currentIndex() == 1:
+            print(self.paletteLabel.text())
+            self.viewer.ChangePalette(self.paletteLabel.text())
+
         self.viewer.setPreview()
+
+        return True
 
     def SaveHistory(self):
 
@@ -284,6 +295,7 @@ class Ui_MainWindow(QMainWindow):
             self.statusBar().showMessage("Brak starszych zmian")
 
     def Redo(self):
+
         if self.viewer.changes + 1 <= self.viewer.maxChanges:
 
             self.viewer.changes += 1
@@ -303,6 +315,7 @@ class Ui_MainWindow(QMainWindow):
             self.statusBar().showMessage("Brak nowszych zmian")
 
     def Reset(self):
+
         if self.viewer.changes < self.viewer.maxChanges:
             self.viewer.changes += 1
             self.viewer.previewHistory[self.viewer.changes] = [0, 1, 0, 0, 0, 0, 0]
@@ -327,20 +340,35 @@ class Ui_MainWindow(QMainWindow):
         print(self.viewer.previewHistory)
 
     def ShowOutlineSlider(self):
+
         if self.checkboxOutline.isChecked():
             self.sliderOutline.setEnabled(True)
         else:
             self.sliderOutline.setEnabled(False)
 
     def ModeChange(self, index):
+
         if index == 0:
             self.sliderColorcount.show()
             self.paletteButton.hide()
             self.paletteLabel.hide()
+
+            self.ApplyEffects()
+
         else:
             self.sliderColorcount.hide()
             self.paletteButton.show()
             self.paletteLabel.show()
 
+            if self.paletteLabel.text() != "":
+                self.ApplyEffects()
+
     def OpenPaletteFile(self):
-        pass
+
+        self.checkboxResize.setChecked(True)
+        self.checkboxResize.update()
+
+        paletteLocation = QFileDialog.getOpenFileName()
+        self.paletteLabel.setText(paletteLocation[0])
+
+        self.ApplyEffects()
