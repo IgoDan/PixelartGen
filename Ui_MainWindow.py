@@ -98,7 +98,6 @@ class Ui_MainWindow(QMainWindow):
         #COLOR PALETTE LABEL
         self.paletteLabel = QLabel(parent = self)
         self.paletteLabel.setFrameStyle(QFrame.Panel)
-        self.paletteLabel.setText("Źródło:")
         self.paletteLabel.setGeometry(QRect(80, 295, 350, 20))
         self.paletteLabel.setText("")
 
@@ -222,8 +221,7 @@ class Ui_MainWindow(QMainWindow):
         if self.sliderSaturation.slider.value() != 0:
             self.viewer.ChangeSaturation(self.sliderSaturation.slider.value())
 
-        if self.modeComboBox.currentIndex() == 1:
-            print(self.paletteLabel.text())
+        if self.modeComboBox.currentIndex() == 1 and self.paletteLabel.text() != "":
             self.viewer.ChangePalette(self.paletteLabel.text())
 
         self.viewer.setPreview()
@@ -360,6 +358,7 @@ class Ui_MainWindow(QMainWindow):
             self.paletteButton.show()
             self.paletteLabel.show()
 
+            print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             if self.paletteLabel.text() != "":
                 self.ApplyEffects()
 
