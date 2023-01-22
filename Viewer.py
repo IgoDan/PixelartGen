@@ -59,6 +59,9 @@ class Viewer(QWidget):
 
     def setImage(self, file_path):
 
+        if file_path == "":
+            return
+            
         fmt = imghdr.what(file_path)
         img = QPixmap(file_path, format = fmt)
 

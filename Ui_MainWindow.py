@@ -358,7 +358,6 @@ class Ui_MainWindow(QMainWindow):
             self.paletteButton.show()
             self.paletteLabel.show()
 
-            print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             if self.paletteLabel.text() != "":
                 self.ApplyEffects()
 
