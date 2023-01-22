@@ -61,7 +61,7 @@ class Viewer(QWidget):
 
         if file_path == "":
             return
-            
+
         fmt = imghdr.what(file_path)
         img = QPixmap(file_path, format = fmt)
 
