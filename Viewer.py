@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QMessageBox
-from PySide6.QtCore import Qt, QRect
+from PySide6.QtCore import Qt, QRect, QRunnable
 from PySide6.QtGui import QPixmap, QImage
 import cv2, numpy as np
 import imghdr
 import os
 
-class Viewer(QWidget):
+class Viewer(QWidget, QRunnable):
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -104,7 +104,7 @@ class Viewer(QWidget):
 
         cv2.imwrite("pixelart.png", pixelart)
 
-    def colorReduce(self, count):
+    def ColorReduce(self, count):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
         imgf = np.float32(img).reshape(-1, 3)

@@ -1,10 +1,11 @@
 import os, cv2
 
-from PySide6.QtCore import QRect, QEvent
+from PySide6.QtCore import QRect, QEvent, QThreadPool, QMetaObject
 from PySide6.QtWidgets import  QWidget, QLabel, QVBoxLayout, QMenuBar, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame, QMessageBox
 
 from Viewer import Viewer
 from Slider import Slider
+from ProcessingWindow import ProcessingWindow
 
 class Ui_MainWindow(QMainWindow):
 
@@ -13,6 +14,8 @@ class Ui_MainWindow(QMainWindow):
         super().__init__()
 
         self.app = app
+
+
 
         self.setWindowTitle("PixelartGen")
         self.showMaximized()
@@ -47,10 +50,10 @@ class Ui_MainWindow(QMainWindow):
         resetAction.triggered.connect(self.Reset)
 
         #PIXELATE FACTOR SLIDER
-        self.sliderPixelate = Slider(self, 1, 64, 1, "Pikselizacja")
+        self.sliderPixelate = Slider(self, 8, 64, 8, "Pikselizacja")
         self.sliderPixelate.setGeometry(QRect(80, 60, 350, 60))
 
-        self.sliderPixelate.slider.valueChanged.connect(self.ApplyEffects)
+        self.sliderPixelate.slider.sliderReleased.connect(self.ApplyEffects)
         self.sliderPixelate.slider.sliderReleased.connect(self.SaveHistory)
 
         #RESIZE CHECKBOX
@@ -64,7 +67,7 @@ class Ui_MainWindow(QMainWindow):
         self.sliderSmoothing = Slider(self, 0, 8, 0, "Wygładzanie")
         self.sliderSmoothing.setGeometry(QRect(80, 140, 350, 60))
 
-        self.sliderSmoothing.slider.valueChanged.connect(self.ApplyEffects)
+        self.sliderSmoothing.slider.sliderReleased.connect(self.ApplyEffects)
         self.sliderSmoothing.slider.sliderReleased.connect(self.SaveHistory)
 
         #CATEGORY 2 FRAME
@@ -154,8 +157,20 @@ class Ui_MainWindow(QMainWindow):
         self.sliderOutline.setEnabled(False)
 
         #VIEWER
+        self.threadpool = QThreadPool()
         self.viewer = Viewer(self)
         self.viewer.setGeometry(QRect(480, 50, 480, 680))
+
+        self.threadpool.start(self.viewer.Pixelate)
+        self.threadpool.start(self.viewer.ColorReduce)
+        self.threadpool.start(self.viewer.ChangeBrightness)
+        self.threadpool.start(self.viewer.ChangeContrast)
+        self.threadpool.start(self.viewer.SmoothImage)
+        self.threadpool.start(self.viewer.CreateOutline)
+        self.threadpool.start(self.viewer.ChangeSaturation)
+        self.threadpool.start(self.viewer.ChangePalette)
+
+        self.processing_window = ProcessingWindow(self)
 
         #STATUSBAR
         self.setStatusBar(QStatusBar(self))
@@ -200,6 +215,9 @@ class Ui_MainWindow(QMainWindow):
 
         self.viewer.copySource()
 
+        self.processing_window.center()
+        self.processing_window.show()
+
         if self.sliderSmoothing.slider.value() != 0:
             self.viewer.SmoothImage(self.sliderSmoothing.slider.value())
 
@@ -210,7 +228,7 @@ class Ui_MainWindow(QMainWindow):
             self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())
 
         if self.sliderColorcount.slider.value() != 0 and self.modeComboBox.currentIndex() == 0:
-            self.viewer.colorReduce(self.sliderColorcount.slider.value())
+            self.viewer.ColorReduce(self.sliderColorcount.slider.value())
 
         if self.sliderBrightness.slider.value() != 0:
             self.viewer.ChangeBrightness(self.sliderBrightness.slider.value())
@@ -225,6 +243,8 @@ class Ui_MainWindow(QMainWindow):
             self.viewer.ChangePalette(self.paletteLabel.text())
 
         self.viewer.setPreview()
+
+        self.processing_window.hide()
 
         return True
 
