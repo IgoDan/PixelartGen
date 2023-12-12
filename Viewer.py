@@ -4,6 +4,7 @@ from PySide6.QtGui import QPixmap, QImage
 import cv2, numpy as np
 import imghdr
 import os
+import math
 
 class Viewer(QWidget, QRunnable):
 
@@ -33,7 +34,8 @@ class Viewer(QWidget, QRunnable):
 
         self.changes = 0
         self.maxChanges = 0
-        self.previewHistory = [[0, 1, 0, 0, 0, 0, 0]]
+        self.default_settings = [8, False, 0, 0, 0, 0, 0, 0, False, 1]
+        self.previewHistory = [[8, False, 0, 0, 0, 0, 0, 0, False, 1]]
 
 
     def dragEnterEvent(self, event):
@@ -171,7 +173,7 @@ class Viewer(QWidget, QRunnable):
         ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
 
         contours, hierarchy = cv2.findContours(image = thresh, mode = cv2.RETR_TREE, method = cv2.CHAIN_APPROX_NONE)
-                                      
+                 
         cv2.drawContours(image = img, contours = contours, contourIdx = -1, color = (0, 0, 0), thickness = thickness, lineType = cv2.LINE_AA)
 
         cv2.imwrite("pixelart.png", img)
