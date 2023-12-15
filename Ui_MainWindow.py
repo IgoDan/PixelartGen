@@ -15,8 +15,6 @@ class Ui_MainWindow(QMainWindow):
 
         self.app = app
 
-
-
         self.setWindowTitle("PixelartGen")
         self.showMaximized()
         self.setFixedSize(1024,768)
@@ -50,8 +48,9 @@ class Ui_MainWindow(QMainWindow):
         resetAction.triggered.connect(self.Reset)
 
         #PIXELATE FACTOR SLIDER
-        self.sliderPixelate = Slider(self, 8, 64, 8, "Pikselizacja")
+        self.sliderPixelate = Slider(self, 4, 64, 8, "Pikselizacja")
         self.sliderPixelate.setGeometry(QRect(80, 60, 350, 60))
+        self.sliderPixelate.slider.update()
 
         self.sliderPixelate.slider.sliderReleased.connect(self.StartProcessing)
         self.sliderPixelate.slider.sliderReleased.connect(self.SaveHistory)
@@ -190,16 +189,39 @@ class Ui_MainWindow(QMainWindow):
     def OpenImage(self):
 
         openLocation = QFileDialog.getOpenFileName()
-        print(openLocation)
-        self.viewer.setImage(openLocation[0])
+
+        self.LoadImage(openLocation[0])
+
+    #LOAD IMAGE FROM GIVEN LOCATION
+    def LoadImage(self, openLocation):
+
+        if openLocation is None:
+            self.statusBar().showMessage("Nie udało się otworzyć pliku")
+            return
+        
+        self.viewer.setImage(openLocation)
+
+        try:
+            self.InitializeHistory()
+            self.ApplyEffects()
+            self.statusBar().showMessage("Plik został poprawnie otwarty")
+        except:
+            self.statusBar().showMessage("Nie udało się otworzyć pliku")
 
     #SAVE IMAGE TO FILE
     def SaveImage(self):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-        saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
-        print(saveLocation)
-        cv2.imwrite(saveLocation[0], img)
+        if not os.path.exists("pixelart.png"):
+            self.statusBar().showMessage("Brak obrazu do zapisania")
+            return
+        
+        try:
+            img = cv2.imread(os.getcwd() + "\pixelart.png")
+
+            saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
+            cv2.imwrite(saveLocation[0], img)
+        except:
+            self.statusBar().showMessage("Anulowano zapis pliku")
 
     #CLOSE APP
     def QuitApp(self):
@@ -208,12 +230,16 @@ class Ui_MainWindow(QMainWindow):
 
     def StartProcessing(self):
 
+        if not os.path.exists("source.png"):
+            self.statusBar().showMessage("Przed rozpoczęciem edycji otwórz obraz")
+            return
+        
         #NEW PROCESSING THREAD
         self.threadpool.start(self.ApplyEffects)
 
         self.processingWindow.center()
         self.processingWindow.show()
-
+    
     def ApplyEffects(self):
 
         if not os.path.exists("source.png"):
@@ -250,6 +276,23 @@ class Ui_MainWindow(QMainWindow):
         QMetaObject.invokeMethod(self.processingWindow, "hide")
 
         return True
+    
+    def InitializeHistory(self):
+
+        self.viewer.changes = 0
+        self.viewer.maxChanges = -1
+
+        self.viewer.previewHistory = [[
+                self.sliderPixelate.slider.value(),
+                self.checkboxResize.isChecked(),
+                self.sliderSmoothing.slider.value(),
+                self.modeComboBox.currentIndex(),
+                self.sliderColorcount.slider.value(),
+                self.sliderBrightness.slider.value(),
+                self.sliderContrast.slider.value(),
+                self.sliderSaturation.slider.value(),
+                self.checkboxOutline.isChecked(),
+                self.sliderOutline.slider.value()]]
 
     def SaveHistory(self):
 
@@ -257,9 +300,12 @@ class Ui_MainWindow(QMainWindow):
             return
 
         if self.viewer.changes + 1 <= self.viewer.maxChanges:
+
             self.viewer.changes += 1
 
-            self.viewer.previewHistory = self.viewer.previewHistory[0:self.viewer.changes]
+            self.viewer.previewHistory = self.viewer.previewHistory[0:(self.viewer.changes + 1)]
+
+            self.viewer.maxChanges = len(self.viewer.previewHistory) - 1
 
             self.viewer.previewHistory[self.viewer.changes] = [
                 self.sliderPixelate.slider.value(),
@@ -274,7 +320,9 @@ class Ui_MainWindow(QMainWindow):
                 self.sliderOutline.slider.value()]
 
         else:
+
             self.viewer.changes += 1
+
             self.viewer.previewHistory.append([
                 self.sliderPixelate.slider.value(),
                 self.checkboxResize.isChecked(),
@@ -287,7 +335,7 @@ class Ui_MainWindow(QMainWindow):
                 self.checkboxOutline.isChecked(),
                 self.sliderOutline.slider.value()])
 
-        if self.viewer.changes >= self.viewer.maxChanges:
+        if self.viewer.changes > self.viewer.maxChanges:
             self.viewer.maxChanges = self.viewer.changes
 
         print(self.viewer.previewHistory)
@@ -303,7 +351,6 @@ class Ui_MainWindow(QMainWindow):
             self.sliderPixelate.slider.update()
 
             self.checkboxResize.setChecked(params[1])
-            #repaint() jeśli by nie działało
             self.checkboxResize.update()
 
             self.sliderSmoothing.slider.setValue(params[2])
@@ -325,7 +372,6 @@ class Ui_MainWindow(QMainWindow):
             self.sliderSaturation.slider.update()
 
             self.checkboxOutline.setChecked(params[8])
-            #repaint() jeśli by nie działało
             self.checkboxOutline.update()
 
             self.sliderOutline.slider.setValue(params[9])
@@ -347,7 +393,6 @@ class Ui_MainWindow(QMainWindow):
             self.sliderPixelate.slider.update()
 
             self.checkboxResize.setChecked(params[1])
-            #repaint() jeśli by nie działało
             self.checkboxResize.update()
 
             self.sliderSmoothing.slider.setValue(params[2])
@@ -369,7 +414,6 @@ class Ui_MainWindow(QMainWindow):
             self.sliderSaturation.slider.update()
 
             self.checkboxOutline.setChecked(params[8])
-            #repaint() jeśli by nie działało
             self.checkboxOutline.update()
 
             self.sliderOutline.slider.setValue(params[9])
@@ -384,19 +428,29 @@ class Ui_MainWindow(QMainWindow):
 
         default_settings = self.viewer.default_settings
 
-        if self.viewer.changes < self.viewer.maxChanges:
+        if self.viewer.previewHistory[self.viewer.changes] == default_settings:
+            self.statusBar().showMessage("Domyślne wartości są już podane")
+            return
+
+        if self.viewer.changes + 1 <= self.viewer.maxChanges:
+
             self.viewer.changes += 1
+
             self.viewer.previewHistory[self.viewer.changes] = default_settings
+
+            self.viewer.previewHistory = self.viewer.previewHistory[0:(self.viewer.changes + 1)]
+
+            self.viewer.maxChanges = len(self.viewer.previewHistory) - 1
 
         else:
             self.viewer.changes += 1
+
             self.viewer.previewHistory.append(default_settings)
 
             self.sliderPixelate.slider.setValue(default_settings[0])
             self.sliderPixelate.slider.update()
 
             self.checkboxResize.setChecked(default_settings[1])
-            #repaint() jeśli by nie działało
             self.checkboxResize.update()
 
             self.sliderSmoothing.slider.setValue(default_settings[2])
@@ -418,7 +472,6 @@ class Ui_MainWindow(QMainWindow):
             self.sliderSaturation.slider.update()
 
             self.checkboxOutline.setChecked(default_settings[8])
-            #repaint() jeśli by nie działało
             self.checkboxOutline.update()
 
             self.sliderOutline.slider.setValue(default_settings[9])
@@ -426,7 +479,7 @@ class Ui_MainWindow(QMainWindow):
 
         self.ApplyEffects()
 
-        if self.viewer.changes >= self.viewer.maxChanges:
+        if self.viewer.changes > self.viewer.maxChanges:
             self.viewer.maxChanges = self.viewer.changes
 
         print(self.viewer.previewHistory)

@@ -1,0 +1,9 @@
+class History():
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.changes = 0
+        self.maxChanges = -1
+        self.default_settings = [8, False, 0, 0, 0, 0, 0, 0, False, 1]
+        self.previewHistory = []

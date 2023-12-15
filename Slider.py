@@ -12,6 +12,7 @@ class Slider(QWidget):
         self.slider = QSlider(tickPosition = QSlider.TicksLeft, orientation = Qt.Horizontal)
         self.slider.setMinimum(min)
         self.slider.setMaximum(max)
+        self.slider.setValue(base)
 
         sliderVbox = QVBoxLayout()
         sliderVbox.setContentsMargins(0, 0, 0, 0)

@@ -1,0 +1,13 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: tila-alit
+;Description: orange colorset for tila
+;Colors: 8
+FF371a47
+FF602547
+FF923a47
+FFac5043
+FFc36d44
+FFe39454
+FFe7b06c
+FFf7ecae

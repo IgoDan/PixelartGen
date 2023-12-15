@@ -33,9 +33,9 @@ class Viewer(QWidget, QRunnable):
         self.show()
 
         self.changes = 0
-        self.maxChanges = 0
+        self.maxChanges = -1
         self.default_settings = [8, False, 0, 0, 0, 0, 0, 0, False, 1]
-        self.previewHistory = [[8, False, 0, 0, 0, 0, 0, 0, False, 1]]
+        self.previewHistory = []
 
 
     def dragEnterEvent(self, event):
@@ -51,9 +51,8 @@ class Viewer(QWidget, QRunnable):
 
             event.setDropAction(Qt.CopyAction)
             file_path = event.mimeData().urls()[0].toLocalFile()
-            self.setImage(file_path)
-            self.copySource()
-            self.parent().ApplyEffects()
+
+            self.parent().LoadImage(file_path)
 
             event.accept()
         else:
@@ -159,7 +158,7 @@ class Viewer(QWidget, QRunnable):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
-        factor = 2 * factor - 1
+        #factor = 2 * factor - 1
 
         smoothed = cv2.medianBlur(img, int(factor))
 
