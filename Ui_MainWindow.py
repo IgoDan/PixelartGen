@@ -167,7 +167,6 @@ class Ui_MainWindow(QMainWindow):
         self.newWindowButton.setGeometry(QRect(80, 640, 350, 40))
         self.newWindowButton.show()
 
-
         self.newWindowButton.clicked.connect(self.OpenRenderWindow)
 
         #VIEWER
