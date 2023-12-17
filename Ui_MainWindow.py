@@ -1,11 +1,13 @@
 import os, cv2
 
-from PySide6.QtCore import QRect, QEvent, QThreadPool, QMetaObject, QTimer
-from PySide6.QtWidgets import  QWidget, QLabel, QVBoxLayout, QMenuBar, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame, QMessageBox
+from PySide6.QtCore import QRect, QThreadPool, QMetaObject
+from PySide6.QtWidgets import QLabel, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame, QMessageBox, QDialog
 
+from History import History
 from Viewer import Viewer
 from Slider import Slider
 from ProcessingWindow import ProcessingWindow
+from Ui_RenderWindow import Ui_RenderWindow
 
 class Ui_MainWindow(QMainWindow):
 
@@ -15,6 +17,7 @@ class Ui_MainWindow(QMainWindow):
 
         self.app = app
 
+        #TITLE BAR
         self.setWindowTitle("PixelartGen")
         self.showMaximized()
         self.setFixedSize(1024,768)
@@ -24,27 +27,27 @@ class Ui_MainWindow(QMainWindow):
         menuBar.setObjectName("menuBar")
         menuBar.setGeometry(QRect(0, 0, 1024, 20))
 
-        self.fileMenu = menuBar.addMenu("&File")
+        self.fileMenu = menuBar.addMenu("&Plik")
 
-        openAction = self.fileMenu.addAction("Open Image")
+        openAction = self.fileMenu.addAction("Otwórz plik")
         openAction.triggered.connect(self.OpenImage)
 
-        saveAction = self.fileMenu.addAction("Save As")
+        saveAction = self.fileMenu.addAction("Zapisz jako")
         saveAction.triggered.connect(self.SaveImage)
 
-        quitAction = self.fileMenu.addAction("Quit")
+        quitAction = self.fileMenu.addAction("Zamknij")
         quitAction.triggered.connect(self.QuitApp)
 
         #MENU BAR - EDIT
-        self.editMenu = menuBar.addMenu("&Edit")
+        self.editMenu = menuBar.addMenu("&Edycja")
 
-        undoAction = self.editMenu.addAction("Undo")
+        undoAction = self.editMenu.addAction("Cofnij")
         undoAction.triggered.connect(self.Undo)
 
-        redoAction = self.editMenu.addAction("Redo")
+        redoAction = self.editMenu.addAction("Ponów")
         redoAction.triggered.connect(self.Redo)
 
-        resetAction = self.editMenu.addAction("Reset")
+        resetAction = self.editMenu.addAction("Resetuj")
         resetAction.triggered.connect(self.Reset)
 
         #PIXELATE FACTOR SLIDER
@@ -58,6 +61,7 @@ class Ui_MainWindow(QMainWindow):
         #RESIZE CHECKBOX
         self.checkboxResize = QCheckBox(parent = self,text = "Zmniejsz realne wymiary zdjęcia")
         self.checkboxResize.setGeometry(QRect(100, 100, 350, 60))
+        self.checkboxResize.setChecked(True)
         self.checkboxResize.show()
 
         self.checkboxResize.stateChanged.connect(self.StartProcessing)
@@ -79,12 +83,11 @@ class Ui_MainWindow(QMainWindow):
 
         #COLOR REDUCE MODE COMBOBOX
         self.modeComboBox = QComboBox(parent = self)
-        self.modeComboBox.addItems(["Adaptywny", "Z pliku"])
+        self.modeComboBox.addItems(["Adaptywny", "Z pliku", "Adaptywny + Dither", "Z pliku + Dither"])
         self.modeComboBox.setGeometry(QRect(80, 220, 350, 40))
         self.modeComboBox.show()
 
         self.modeComboBox.currentIndexChanged.connect(self.ModeChange)
-        #sprawdzić czy działa
         self.modeComboBox.activated.connect(self.SaveHistory)
 
         #COLORS REDUCE SLIDER
@@ -122,28 +125,28 @@ class Ui_MainWindow(QMainWindow):
 
         #CONTRAST SLIDER
         self.sliderContrast = Slider(self, -10, 10, 0, "Kontrast")
-        self.sliderContrast.setGeometry(QRect(80, 370, 350, 60))
+        self.sliderContrast.setGeometry(QRect(80, 380, 350, 60))
 
         self.sliderContrast.slider.sliderReleased.connect(self.StartProcessing)
         self.sliderContrast.slider.sliderReleased.connect(self.SaveHistory)
 
         #SATURATION SLIDER
         self.sliderSaturation = Slider(self, -10, 10, 0, "Nasycenie")
-        self.sliderSaturation.setGeometry(QRect(80, 410, 350, 60))
+        self.sliderSaturation.setGeometry(QRect(80, 430, 350, 60))
 
         self.sliderSaturation.slider.sliderReleased.connect(self.StartProcessing)
         self.sliderSaturation.slider.sliderReleased.connect(self.SaveHistory)
 
         #CATEGORY 3
         self.qframe1 = QFrame(parent = self)
-        self.qframe1.setGeometry(QRect(80, 450, 350, 50))
+        self.qframe1.setGeometry(QRect(80, 480, 350, 50))
         self.qframe1.setFrameShape(QFrame.HLine)
         self.qframe1.setFrameShadow(QFrame.Sunken)
         self.qframe1.show()
 
         #OUTLINE CHECKBOX
         self.checkboxOutline = QCheckBox(parent = self,text = "Dodaj kontur")
-        self.checkboxOutline.setGeometry(QRect(100, 470, 350, 60))
+        self.checkboxOutline.setGeometry(QRect(100, 510, 350, 60))
         self.checkboxOutline.show()
 
         self.checkboxOutline.stateChanged.connect(self.StartProcessing)
@@ -152,12 +155,20 @@ class Ui_MainWindow(QMainWindow):
 
         #OUTLINE THICKNESS SLIDER
         self.sliderOutline = Slider(self, 1, 8, 1, "Grubość konturu")
-        self.sliderOutline.setGeometry(QRect(80, 510, 350, 60))
+        self.sliderOutline.setGeometry(QRect(80, 550, 350, 60))
 
         self.sliderOutline.slider.sliderReleased.connect(self.StartProcessing)
         self.sliderOutline.slider.sliderReleased.connect(self.SaveHistory)
 
         self.sliderOutline.setEnabled(False)
+
+        # NEW WINDOW BUTTON
+        self.newWindowButton = QPushButton("Renderuj obraz", self)
+        self.newWindowButton.setGeometry(QRect(80, 640, 350, 40))
+        self.newWindowButton.show()
+
+
+        self.newWindowButton.clicked.connect(self.OpenRenderWindow)
 
         #VIEWER
         self.threadpool = QThreadPool()
@@ -171,6 +182,10 @@ class Ui_MainWindow(QMainWindow):
         #STATUSBAR
         self.setStatusBar(QStatusBar(self))
 
+        #HISTORY
+        self.history = History(self)
+
+    #APP WINDOW CLOSE
     def closeEvent(self, event):
 
         reply = QMessageBox.question(self, 'Wyłączenie programu',
@@ -179,11 +194,21 @@ class Ui_MainWindow(QMainWindow):
                                      QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            os.remove("source.png")
-            os.remove("pixelart.png")
+
+            if os.path.exists("source.png"):
+                os.remove("source.png")
+
+            if os.path.exists("pixelart.png"):
+                 os.remove("pixelart.png")
+
             event.accept()
         else:
             event.ignore()
+
+    def OpenRenderWindow(self):
+
+        rednerWindow = Ui_RenderWindow(self)
+        rednerWindow.exec_()
 
     #OPEN IMAGE FROM FILE
     def OpenImage(self):
@@ -191,6 +216,10 @@ class Ui_MainWindow(QMainWindow):
         openLocation = QFileDialog.getOpenFileName()
 
         self.LoadImage(openLocation[0])
+
+        #TEST
+        self.history.InitializeHistory()
+        print(self.history.previewHistory)
 
     #LOAD IMAGE FROM GIVEN LOCATION
     def LoadImage(self, openLocation):
@@ -247,17 +276,23 @@ class Ui_MainWindow(QMainWindow):
 
         self.viewer.copySource()
 
-        if self.sliderPixelate.slider.value() != 1:
-            self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())
-
         if self.sliderSmoothing.slider.value() != 0:
-            self.viewer.SmoothImage(self.sliderSmoothing.slider.value())
+            self.viewer.SmoothImage(self.sliderSmoothing.slider.value()) 
+
+        if self.sliderPixelate.slider.value() != 1:
+            self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())   
+
+        if  self.modeComboBox.currentIndex() == 0 and self.sliderColorcount.slider.value() != 0:
+            self.viewer.ColorReduce(self.sliderColorcount.slider.value())
 
         if self.modeComboBox.currentIndex() == 1 and self.paletteLabel.text() != "":
             self.viewer.ChangePalette(self.paletteLabel.text())
 
-        if self.sliderColorcount.slider.value() != 0 and self.modeComboBox.currentIndex() == 0:
-            self.viewer.ColorReduce(self.sliderColorcount.slider.value())
+        if  self.modeComboBox.currentIndex() == 2 and self.sliderColorcount.slider.value() != 0:
+            self.viewer.ColorReduceDither(self.sliderColorcount.slider.value())
+
+        if  self.modeComboBox.currentIndex() == 3 and self.paletteLabel.text() != "":
+            self.viewer.ChangePaletteDither(self.paletteLabel.text())
 
         if self.sliderBrightness.slider.value() != 0:
             self.viewer.ChangeBrightness(self.sliderBrightness.slider.value())
@@ -428,6 +463,10 @@ class Ui_MainWindow(QMainWindow):
 
         default_settings = self.viewer.default_settings
 
+        if self.viewer.previewHistory == []:
+            self.statusBar().showMessage("Nie wczytano pliku")
+            return
+
         if self.viewer.previewHistory[self.viewer.changes] == default_settings:
             self.statusBar().showMessage("Domyślne wartości są już podane")
             return
@@ -493,7 +532,7 @@ class Ui_MainWindow(QMainWindow):
 
     def ModeChange(self, index):
 
-        if index == 0:
+        if index == 0 or index == 2:
             self.sliderColorcount.show()
             self.paletteButton.hide()
             self.paletteLabel.hide()
@@ -510,8 +549,9 @@ class Ui_MainWindow(QMainWindow):
 
     def OpenPaletteFile(self):
 
-        self.checkboxResize.setChecked(True)
-        self.checkboxResize.update()
+        #Setting for performance boosting
+        #self.checkboxResize.setChecked(True)
+        #self.checkboxResize.update()
 
         paletteLocation = QFileDialog.getOpenFileName()
         self.paletteLabel.setText(paletteLocation[0])

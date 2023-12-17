@@ -1,10 +1,9 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QMessageBox
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QRect, QRunnable
-from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtGui import QPixmap
 import cv2, numpy as np
 import imghdr
 import os
-import math
 
 class Viewer(QWidget, QRunnable):
 
@@ -34,8 +33,10 @@ class Viewer(QWidget, QRunnable):
 
         self.changes = 0
         self.maxChanges = -1
-        self.default_settings = [8, False, 0, 0, 0, 0, 0, 0, False, 1]
+        self.default_settings = [8, True, 0, 0, 0, 0, 0, 0, False, 1]
         self.previewHistory = []
+
+        self.rgb_pal = []
 
 
     def dragEnterEvent(self, event):
@@ -114,11 +115,67 @@ class Viewer(QWidget, QRunnable):
         compactness, label, center = cv2.kmeans(imgf, count, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
 
         center = np.uint8(center)
+
+        pal_rgb = center.tolist()
+
         pixelart = center[label.flatten()]
 
         pixelart = pixelart.reshape(img.shape)
 
         cv2.imwrite("pixelart.png", pixelart)
+
+    def ColorReduceDither(self, count):
+
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
+
+        imgf = np.float32(img).reshape(-1, 3)
+
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
+        compactness, label, center = cv2.kmeans(imgf, count, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+
+        center = np.uint8(center)
+        pal_rgb = center.tolist()
+
+        print(pal_rgb)
+
+        for color in pal_rgb:
+            color[0], color[1], color[2] = color[2], color[1], color[0]
+
+        h = img.shape[0]
+        w = img.shape[1]
+
+        for y in range(h):
+            for x in range(w):
+
+                r, g, b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
+
+                #Checking color palette for closest color
+                new_color = self.FindClosestColor(r, g, b, pal_rgb)
+
+                img[y, x, 2], img[y, x, 1], img[y, x, 0] = new_color
+
+                #QUANT ERROR = old_color - new_color
+                quant_error = np.array([r - new_color[0], g - new_color[1], b - new_color[2]])
+
+                #Floyd–Steinberg dithering:
+                #Multiplying (x+1;y) by 7/16
+                if x + 1 < w:
+                    img[y, x + 1, :] = np.clip(img[y, x + 1, :] + quant_error * (7 / 16), 0, 255)
+
+                #Multiplying (x+1;y+1) by 1/16
+                if x + 1 < w and y + 1 < h:
+                    img[y + 1, x + 1, :] = np.clip(img[y + 1, x + 1, :] + quant_error * (1 / 16), 0, 255)
+
+                #Multiplying (x;y+1) by 5/16
+                if y + 1 < h:
+                    img[y + 1, x, :] = np.clip(img[y + 1, x, :] + quant_error * (5 / 16), 0, 255)
+
+                #Multiplying (x-1;y+1) by 3/16
+                if x - 1 >= 0 and y + 1 < h:
+                    img[y + 1, x - 1, :] = np.clip(img[y + 1, x - 1, :] + quant_error * (3 / 16), 0, 255)
+
+        cv2.imwrite("pixelart.png", img)
+
 
     def ChangeBrightness(self, brightness):
 
@@ -158,7 +215,7 @@ class Viewer(QWidget, QRunnable):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
-        #factor = 2 * factor - 1
+        factor = 2 * factor - 1
 
         smoothed = cv2.medianBlur(img, int(factor))
 
@@ -169,11 +226,15 @@ class Viewer(QWidget, QRunnable):
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        ret, thresh = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
+        img_blurred = cv2.GaussianBlur(src=img_gray, ksize=(5, 7), sigmaX=0.5)
+        edges = cv2.Canny(img_blurred, 70, 135)
 
-        contours, hierarchy = cv2.findContours(image = thresh, mode = cv2.RETR_TREE, method = cv2.CHAIN_APPROX_NONE)
-                 
-        cv2.drawContours(image = img, contours = contours, contourIdx = -1, color = (0, 0, 0), thickness = thickness, lineType = cv2.LINE_AA)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        cv2.drawContours(img, contours, -1, (0, 0, 0), thickness)
 
         cv2.imwrite("pixelart.png", img)
 
@@ -191,9 +252,8 @@ class Viewer(QWidget, QRunnable):
 
         cv2.imwrite("pixelart.png", saturated)
 
-    def ChangePalette(self, dir):
-
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
+    def LoadPalette(self, dir):
+        
         pal_file = open(dir, "r")
 
         pal = []
@@ -209,6 +269,29 @@ class Viewer(QWidget, QRunnable):
         for hex in pal:
             pal_rgb.append([int("0x" + hex[0:2], 0), int("0x" + hex[2:4], 0), int("0x" + hex[4:6], 0)])
 
+        return pal_rgb
+    
+    def FindClosestColor(self, r, g, b, color_palette):
+
+        old_color = [r, g, b]
+        new_color = color_palette[0]
+        min_distance = np.linalg.norm(np.array(old_color) - np.array(color_palette[0]))
+
+        for color in color_palette:
+            new_distance = np.linalg.norm(np.array(color) - np.array(old_color))
+
+            if new_distance < min_distance:
+                new_color = color
+                min_distance = new_distance
+
+        return new_color
+
+
+    def ChangePalette(self, dir):
+
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
+        
+        pal_rgb = self.LoadPalette(dir)
 
         h = img.shape[0]
         w = img.shape[1]
@@ -216,13 +299,63 @@ class Viewer(QWidget, QRunnable):
         for y in range(0, h):
             for x in range(0, w):
                 r,g,b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
-                dif = []
-                for clr in pal_rgb:
-                    dif.append(sum([abs(r - clr[0]), abs(g - clr[1]), abs(b - clr[2])]))
 
-                min_index = dif.index(min(dif))
+                new_color = self.FindClosestColor(r, g, b, pal_rgb)
 
-                img[y, x, 2], img[y, x, 1], img[y, x, 0] = pal_rgb[min_index][0], pal_rgb[min_index][1], pal_rgb[min_index][2]
+                img[y, x, 2], img[y, x, 1], img[y, x, 0] = new_color
+
+        cv2.imwrite("pixelart.png", img)
+
+        self.setPreview()
+
+    def ChangePaletteDither(self, dir):
+
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
+        
+        pal_rgb = self.LoadPalette(dir)
+
+        h = img.shape[0]
+        w = img.shape[1]
+
+        counter = 0
+
+        for y in range(h):
+            for x in range(w):
+
+                r, g, b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
+
+                #Checking color palette for closest color
+                new_color = self.FindClosestColor(r, g, b, pal_rgb)
+
+                img[y, x, 2], img[y, x, 1], img[y, x, 0] = new_color
+
+                #QUANT ERROR = old_color - new_color
+                quant_error = np.array([r - new_color[0], g - new_color[1], b - new_color[2]])
+
+                #Floyd–Steinberg dithering:
+                #Multiplying (x+1;y) by 7/16
+                if x + 1 < w:
+                    img[y, x + 1, :] = np.clip(img[y, x + 1, :] + quant_error * (7 / 16), 0, 255)
+
+                #Multiplying (x+1;y+1) by 1/16
+                if x + 1 < w and y + 1 < h:
+                    img[y + 1, x + 1, :] = np.clip(img[y + 1, x + 1, :] + quant_error * (1 / 16), 0, 255)
+
+                #Multiplying (x;y+1) by 5/16
+                if y + 1 < h:
+                    img[y + 1, x, :] = np.clip(img[y + 1, x, :] + quant_error * (5 / 16), 0, 255)
+
+                #Multiplying (x-1;y+1) by 3/16
+                if x - 1 >= 0 and y + 1 < h:
+                    img[y + 1, x - 1, :] = np.clip(img[y + 1, x - 1, :] + quant_error * (3 / 16), 0, 255)
+
+                counter += 1
+
+                if counter == 20000:
+                    counter = 0
+
+                    cv2.imwrite("pixelart.png", img)
+                    self.setPreview()
 
         cv2.imwrite("pixelart.png", img)
 

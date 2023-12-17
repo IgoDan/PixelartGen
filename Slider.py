@@ -1,13 +1,12 @@
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QSlider
-from PySide6.QtCore import Qt, QRect, Signal
-import cv2, imghdr
+from PySide6.QtCore import Qt
 
 class Slider(QWidget):
 
     def __init__(self, parent, min, max, base, name):
         super().__init__(parent)
 
-        self.label = QLabel(name + ":", alignment = Qt.AlignCenter)
+        self.label = QLabel(name , alignment = Qt.AlignCenter)
 
         self.slider = QSlider(tickPosition = QSlider.TicksLeft, orientation = Qt.Horizontal)
         self.slider.setMinimum(min)
