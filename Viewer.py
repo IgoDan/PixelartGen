@@ -33,7 +33,7 @@ class Viewer(QWidget, QRunnable):
 
         self.changes = 0
         self.maxChanges = -1
-        self.default_settings = [8, True, 0, 0, 0, 0, 0, 0, False, 1]
+        self.default_settings = [8, True, 0, 0, 0, 0, 0, 0, False, 1, 200]
         self.previewHistory = []
 
         self.rgb_pal = []
@@ -138,6 +138,8 @@ class Viewer(QWidget, QRunnable):
 
         print(pal_rgb)
 
+        counter = 0
+
         for color in pal_rgb:
             color[0], color[1], color[2] = color[2], color[1], color[0]
 
@@ -173,6 +175,12 @@ class Viewer(QWidget, QRunnable):
                 #Multiplying (x-1;y+1) by 3/16
                 if x - 1 >= 0 and y + 1 < h:
                     img[y + 1, x - 1, :] = np.clip(img[y + 1, x - 1, :] + quant_error * (3 / 16), 0, 255)
+
+                if counter == 20000:
+                    counter = 0
+
+                    cv2.imwrite("pixelart.png", img)
+                    self.setPreview()
 
         cv2.imwrite("pixelart.png", img)
 
@@ -221,16 +229,13 @@ class Viewer(QWidget, QRunnable):
 
         cv2.imwrite("pixelart.png", smoothed)
 
-    def CreateOutline(self, thickness):
+    def CreateOutline(self, thickness, threshold):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_blurred = cv2.GaussianBlur(src=img_gray, ksize=(5, 7), sigmaX=0.5)
-        edges = cv2.Canny(img_blurred, 70, 135)
-
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        img_blurred = cv2.GaussianBlur(src=img_gray, ksize=(3, 3), sigmaX=0.5)
+        edges = cv2.Canny(img_blurred, threshold, 255, L2gradient=False)
 
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -268,6 +273,8 @@ class Viewer(QWidget, QRunnable):
 
         for hex in pal:
             pal_rgb.append([int("0x" + hex[0:2], 0), int("0x" + hex[2:4], 0), int("0x" + hex[4:6], 0)])
+
+        print("in loadpalette")
 
         return pal_rgb
     

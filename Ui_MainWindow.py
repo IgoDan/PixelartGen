@@ -154,13 +154,22 @@ class Ui_MainWindow(QMainWindow):
         self.checkboxOutline.clicked.connect(self.SaveHistory)
 
         #OUTLINE THICKNESS SLIDER
-        self.sliderOutline = Slider(self, 1, 8, 1, "Grubość konturu")
-        self.sliderOutline.setGeometry(QRect(80, 550, 350, 60))
+        self.slider_outline_thickness = Slider(self, 1, 8, 1, "Grubość konturu")
+        self.slider_outline_thickness.setGeometry(QRect(80, 550, 350, 60))
 
-        self.sliderOutline.slider.sliderReleased.connect(self.StartProcessing)
-        self.sliderOutline.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_outline_thickness.slider.sliderReleased.connect(self.StartProcessing)
+        self.slider_outline_thickness.slider.sliderReleased.connect(self.SaveHistory)
 
-        self.sliderOutline.setEnabled(False)
+        self.slider_outline_thickness.setEnabled(False)
+
+        #OUTLINE THRESHOLD SLIDER
+        self.slider_outline_threshold = Slider(self, 0, 255, 180, "Grubość konturu")
+        self.slider_outline_threshold.setGeometry(QRect(80, 590, 350, 60))
+
+        self.slider_outline_threshold.slider.sliderReleased.connect(self.StartProcessing)
+        self.slider_outline_threshold.slider.sliderReleased.connect(self.SaveHistory)
+
+        self.slider_outline_threshold.setEnabled(False)
 
         # NEW WINDOW BUTTON
         self.newWindowButton = QPushButton("Renderuj obraz", self)
@@ -277,9 +286,9 @@ class Ui_MainWindow(QMainWindow):
 
         if self.sliderSmoothing.slider.value() != 0:
             self.viewer.SmoothImage(self.sliderSmoothing.slider.value()) 
-
+        
         if self.sliderPixelate.slider.value() != 1:
-            self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())   
+            self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())
 
         if  self.modeComboBox.currentIndex() == 0 and self.sliderColorcount.slider.value() != 0:
             self.viewer.ColorReduce(self.sliderColorcount.slider.value())
@@ -303,7 +312,7 @@ class Ui_MainWindow(QMainWindow):
             self.viewer.ChangeSaturation(self.sliderSaturation.slider.value())
 
         if self.checkboxOutline.isChecked():
-            self.viewer.CreateOutline(self.sliderOutline.slider.value())
+            self.viewer.CreateOutline(self.slider_outline_thickness.slider.value(), self.slider_outline_threshold.slider.value())
 
         self.viewer.setPreview()
 
@@ -326,7 +335,8 @@ class Ui_MainWindow(QMainWindow):
                 self.sliderContrast.slider.value(),
                 self.sliderSaturation.slider.value(),
                 self.checkboxOutline.isChecked(),
-                self.sliderOutline.slider.value()]]
+                self.slider_outline_thickness.slider.value(),
+                self.slider_outline_threshold.slider.value()]]
 
     def SaveHistory(self):
 
@@ -351,7 +361,8 @@ class Ui_MainWindow(QMainWindow):
                 self.sliderContrast.slider.value(),
                 self.sliderSaturation.slider.value(),
                 self.checkboxOutline.isChecked(),
-                self.sliderOutline.slider.value()]
+                self.slider_outline_thickness.slider.value(),
+                self.slider_outline_threshold.slider.value()]
 
         else:
 
@@ -367,7 +378,8 @@ class Ui_MainWindow(QMainWindow):
                 self.sliderContrast.slider.value(),
                 self.sliderSaturation.slider.value(),
                 self.checkboxOutline.isChecked(),
-                self.sliderOutline.slider.value()])
+                self.slider_outline_thickness.slider.value(),
+                self.slider_outline_threshold.slider.value()])
 
         if self.viewer.changes > self.viewer.maxChanges:
             self.viewer.maxChanges = self.viewer.changes
@@ -408,10 +420,13 @@ class Ui_MainWindow(QMainWindow):
             self.checkboxOutline.setChecked(params[8])
             self.checkboxOutline.update()
 
-            self.sliderOutline.slider.setValue(params[9])
-            self.sliderOutline.slider.update()
+            self.slider_outline_thickness.slider.setValue(params[9])
+            self.slider_outline_thickness.slider.update()
 
-            self.ApplyEffects()
+            self.slider_outline_threshold.slider.setValue(params[10])
+            self.slider_outline_threshold.slider.update()
+
+            self.StartProcessing()
 
         else:
             self.statusBar().showMessage("Brak starszych zmian")
@@ -450,10 +465,13 @@ class Ui_MainWindow(QMainWindow):
             self.checkboxOutline.setChecked(params[8])
             self.checkboxOutline.update()
 
-            self.sliderOutline.slider.setValue(params[9])
-            self.sliderOutline.slider.update()
+            self.slider_outline_thickness.slider.setValue(params[9])
+            self.slider_outline_thickness.slider.update()
 
-            self.ApplyEffects()
+            self.slider_outline_threshold.slider.setValue(params[10])
+            self.slider_outline_threshold.slider.update()
+
+            self.StartProcessing()
 
         else:
             self.statusBar().showMessage("Brak nowszych zmian")
@@ -512,10 +530,13 @@ class Ui_MainWindow(QMainWindow):
             self.checkboxOutline.setChecked(default_settings[8])
             self.checkboxOutline.update()
 
-            self.sliderOutline.slider.setValue(default_settings[9])
-            self.sliderOutline.slider.update()
+            self.slider_outline_thickness.slider.setValue(default_settings[9])
+            self.slider_outline_thickness.slider.update()
 
-        self.ApplyEffects()
+            self.slider_outline_threshold.slider.setValue(default_settings[10])
+            self.slider_outline_threshold.slider.update()
+
+        self.StartProcessing()
 
         if self.viewer.changes > self.viewer.maxChanges:
             self.viewer.maxChanges = self.viewer.changes
@@ -525,26 +546,31 @@ class Ui_MainWindow(QMainWindow):
     def ShowOutlineSlider(self):
 
         if self.checkboxOutline.isChecked():
-            self.sliderOutline.setEnabled(True)
+            self.slider_outline_thickness.setEnabled(True)
+            self.slider_outline_threshold.setEnabled(True)
         else:
-            self.sliderOutline.setEnabled(False)
+            self.slider_outline_thickness.setEnabled(False)
+            self.slider_outline_threshold.setEnabled(False)
 
     def ModeChange(self, index):
 
         if index == 0 or index == 2:
+
             self.sliderColorcount.show()
             self.paletteButton.hide()
             self.paletteLabel.hide()
 
-            self.ApplyEffects()
+            if self.sliderColorcount.slider.value != 0:
+                self.StartProcessing()
 
         else:
+
             self.sliderColorcount.hide()
             self.paletteButton.show()
             self.paletteLabel.show()
 
             if self.paletteLabel.text() != "":
-                self.ApplyEffects()
+                self.StartProcessing()
 
     def OpenPaletteFile(self):
 
@@ -552,7 +578,10 @@ class Ui_MainWindow(QMainWindow):
         #self.checkboxResize.setChecked(True)
         #self.checkboxResize.update()
 
-        paletteLocation = QFileDialog.getOpenFileName()
-        self.paletteLabel.setText(paletteLocation[0])
+        try:
+            paletteLocation = QFileDialog.getOpenFileName()
+            self.paletteLabel.setText(paletteLocation[0])
+        except:
+            self.statusBar().showMessage("Nie udało się otworzyć pliku palety barw")
 
-        self.ApplyEffects()
+        self.StartProcessing()
