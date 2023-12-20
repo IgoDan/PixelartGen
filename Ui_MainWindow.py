@@ -1,12 +1,14 @@
 import os, cv2
 
 from PySide6.QtCore import QRect, QThreadPool, QMetaObject
-from PySide6.QtWidgets import QLabel, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame, QMessageBox, QDialog
+from PySide6.QtWidgets import QLabel, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame, QMessageBox
+from PySide6.QtGui import QIcon
 
 from Viewer import Viewer
 from Slider import Slider
 from ProcessingWindow import ProcessingWindow
 from Ui_EditWindow import Ui_EditWindow
+from colorthief import ColorThief
 
 class Ui_MainWindow(QMainWindow):
 
@@ -21,10 +23,15 @@ class Ui_MainWindow(QMainWindow):
         self.showMaximized()
         self.setFixedSize(1024,768)
 
+        my_icon = QIcon()
+        my_icon.addFile('icon.png')
+
+        self.setWindowIcon(my_icon)
+
         #MENU BAR - FILE
         menu_bar = self.menuBar()
         menu_bar.setObjectName("menu_bar")
-        menu_bar.setGeometry(QRect(0, 0, 1024, 20))
+        menu_bar.setGeometry(QRect(0, 0, 1024, 30))
 
         self.file_menu = menu_bar.addMenu("&Plik")
 
@@ -54,30 +61,26 @@ class Ui_MainWindow(QMainWindow):
         self.slider_pixelation.setGeometry(QRect(80, 40, 350, 60))
         self.slider_pixelation.slider.update()
 
-        #self.slider_pixelation.slider.sliderReleased.connect(self.start_processing)
-        #self.slider_pixelation.slider.sliderReleased.connect(self.save_history)
-
         #RESIZE CHECKBOX
         self.checkbox_resize = QCheckBox(parent = self,text = "Zmniejsz realne wymiary obrazu (zalecane)")
         self.checkbox_resize.setGeometry(QRect(100, 80, 350, 60))
         self.checkbox_resize.setChecked(True)
         self.checkbox_resize.show()
 
-        self.checkbox_resize.stateChanged.connect(self.start_processing)
+        self.checkbox_resize.clicked.connect(self.start_processing)
         self.checkbox_resize.clicked.connect(self.save_history)
 
         #SMOOTHING SLIDER
         self.slider_smoothing = Slider(self, 0, 16, 0, "Wygładzanie")
         self.slider_smoothing.setGeometry(QRect(80, 120, 350, 60))
 
-        self.slider_smoothing.slider.sliderReleased.connect(self.start_processing)
-        self.slider_smoothing.slider.sliderReleased.connect(self.save_history)
-
         #CATEGORY 1_2 FRAME
-        self.frame1_2 = QFrame(parent = self)
-        self.frame1_2.setGeometry(QRect(80, 160, 350, 50))
+        self.frame1_2 = QLabel(parent = self)
+        self.frame1_2.setGeometry(QRect(80, 180, 350, 10))
         self.frame1_2.setFrameShape(QFrame.HLine)
-        self.frame1_2.setFrameShadow(QFrame.Sunken)
+        self.frame1_2.setFrameShadow(QFrame.Plain)
+        self.frame1_2.setLineWidth(2)
+        self.frame1_2.setStyleSheet("color: #333333;")
         self.frame1_2.show()
 
         #COLOR REDUCE MODE COMBOBOX
@@ -87,14 +90,12 @@ class Ui_MainWindow(QMainWindow):
         self.mode_combobox.show()
 
         self.mode_combobox.currentIndexChanged.connect(self.change_mode)
-        self.mode_combobox.activated.connect(self.save_history)
+        self.mode_combobox.currentIndexChanged.connect(self.save_history)
+        #self.mode_combobox.activated.connect(self.save_history)
 
         #COLORS REDUCE SLIDER
         self.slider_colorcount = Slider(self, 0, 32, 0, "Redukcja barw")
         self.slider_colorcount.setGeometry(QRect(80, 240, 350, 60))
-
-        self.slider_colorcount.slider.sliderReleased.connect(self.start_processing)
-        self.slider_colorcount.slider.sliderReleased.connect(self.save_history)
 
         #COLOR PALETTE OPEN BUTTON
         self.button_palette = QPushButton("Wybierz plik", self)
@@ -109,10 +110,12 @@ class Ui_MainWindow(QMainWindow):
         self.label_palette.setText("")
 
         #CATEGORY 2_3 FRAME
-        self.frame2_3 = QFrame(parent = self)
-        self.frame2_3.setGeometry(QRect(80, 290, 350, 50))
+        self.frame2_3 = QLabel(parent = self)
+        self.frame2_3.setGeometry(QRect(80, 310, 350, 10))
         self.frame2_3.setFrameShape(QFrame.HLine)
-        self.frame2_3.setFrameShadow(QFrame.Sunken)
+        self.frame2_3.setFrameShadow(QFrame.Plain)
+        self.frame2_3.setLineWidth(2)
+        self.frame2_3.setStyleSheet("color: #333333;")
         self.frame2_3.show()
 
         #EFFECTS ORDER CHECKBOX
@@ -121,35 +124,28 @@ class Ui_MainWindow(QMainWindow):
         self.checkbox_effects_order.setChecked(True)
         self.checkbox_effects_order.show()
 
-        self.checkbox_effects_order.stateChanged.connect(self.start_processing)
+        self.checkbox_effects_order.clicked.connect(self.start_processing)
         self.checkbox_effects_order.clicked.connect(self.save_history)
 
         #BRIGHTNESS SLIDER
         self.slider_brightness = Slider(self, -20, 20, 0, "Jasność")
         self.slider_brightness.setGeometry(QRect(80, 350, 350, 60))
 
-        self.slider_brightness.slider.sliderReleased.connect(self.start_processing)
-        self.slider_brightness.slider.sliderReleased.connect(self.save_history)
-
         #CONTRAST SLIDER
         self.slider_contrast = Slider(self, -20, 20, 0, "Kontrast")
         self.slider_contrast.setGeometry(QRect(80, 400, 350, 60))
-
-        self.slider_contrast.slider.sliderReleased.connect(self.start_processing)
-        self.slider_contrast.slider.sliderReleased.connect(self.save_history)
 
         #SATURATION SLIDER
         self.slider_saturation = Slider(self, -20, 20, 0, "Nasycenie")
         self.slider_saturation.setGeometry(QRect(80, 450, 350, 60))
 
-        self.slider_saturation.slider.sliderReleased.connect(self.start_processing)
-        self.slider_saturation.slider.sliderReleased.connect(self.save_history)
-
         #CATEGORY 3_4 FRAME
-        self.frame3_4 = QFrame(parent = self)
-        self.frame3_4.setGeometry(QRect(80, 490, 350, 50))
+        self.frame3_4 = QLabel(parent = self)
+        self.frame3_4.setGeometry(QRect(80, 510, 350, 10))
         self.frame3_4.setFrameShape(QFrame.HLine)
-        self.frame3_4.setFrameShadow(QFrame.Sunken)
+        self.frame3_4.setFrameShadow(QFrame.Plain)
+        self.frame3_4.setLineWidth(2)
+        self.frame3_4.setStyleSheet("color: #333333;")
         self.frame3_4.show()
 
         #OUTLINE CHECKBOX
@@ -157,37 +153,31 @@ class Ui_MainWindow(QMainWindow):
         self.checkbox_outline.setGeometry(QRect(100, 510, 350, 60))
         self.checkbox_outline.show()
 
-        self.checkbox_outline.stateChanged.connect(self.start_processing)
-        self.checkbox_outline.stateChanged.connect(self.show_outline_slider)
+        self.checkbox_outline.clicked.connect(self.start_processing)
+        self.checkbox_outline.clicked.connect(self.show_outline_slider)
         self.checkbox_outline.clicked.connect(self.save_history)
 
         #OUTLINE THICKNESS SLIDER
         self.slider_outline_thickness = Slider(self, 1, 8, 1, "Grubość konturu")
         self.slider_outline_thickness.setGeometry(QRect(80, 550, 350, 60))
-
-        self.slider_outline_thickness.slider.sliderReleased.connect(self.start_processing)
-        self.slider_outline_thickness.slider.sliderReleased.connect(self.save_history)
-
         self.slider_outline_thickness.setEnabled(False)
 
         #OUTLINE THRESHOLD SLIDER
         self.slider_outline_threshold = Slider(self, 0, 255, 180, "Progowy kontrast konturu")
         self.slider_outline_threshold.setGeometry(QRect(80, 600, 350, 60))
-
-        self.slider_outline_threshold.slider.sliderReleased.connect(self.start_processing)
-        self.slider_outline_threshold.slider.sliderReleased.connect(self.save_history)
-
         self.slider_outline_threshold.setEnabled(False)
 
         #CATEGORY 4_5 FRAME
-        self.frame4_5 = QFrame(parent = self)
-        self.frame4_5.setGeometry(QRect(80, 640, 350, 50))
+        self.frame4_5 = QLabel(parent = self)
+        self.frame4_5.setGeometry(QRect(80, 660, 350, 10))
         self.frame4_5.setFrameShape(QFrame.HLine)
-        self.frame4_5.setFrameShadow(QFrame.Sunken)
+        self.frame4_5.setFrameShadow(QFrame.Plain)
+        self.frame4_5.setLineWidth(2)
+        self.frame4_5.setStyleSheet("color: #333333;")
         self.frame4_5.show()
 
         #EDIT WINDOW BUTTON
-        self.button_edit_window = QPushButton("Renderuj obraz", self)
+        self.button_edit_window = QPushButton("Edytuj i eksportuj obraz", self)
         self.button_edit_window.setGeometry(QRect(80, 680, 350, 40))
         self.button_edit_window.show()
 
@@ -206,6 +196,10 @@ class Ui_MainWindow(QMainWindow):
 
         #STATUSBAR
         self.setStatusBar(QStatusBar(self))
+
+        #COLOR PALETTE
+        self.palette_reduced = []
+
 
     #APP WINDOW CLOSE
     def closeEvent(self, event):
@@ -229,8 +223,28 @@ class Ui_MainWindow(QMainWindow):
     #MOVE TO EDIT WINDOW
     def open_edit_window(self):
 
-        window_edit = Ui_EditWindow(self)
-        window_edit.exec_()
+        if os.path.exists("pixelart.png"):
+
+            color_thief = ColorThief("./pixelart.png")
+
+            if (self.slider_colorcount.slider.value() != 0 and (self.mode_combobox.currentIndex() == 0 or self.mode_combobox.currentIndex() == 1)) or (self.mode_combobox.currentIndex() == 2 or self.mode_combobox.currentIndex() == 3):
+                
+                #LEN COUNT ALL 3 RGB VALUES IN
+                palette_len = len(self.palette_reduced) % 12 + 1
+
+                print(palette_len)
+
+                palette_from_image = color_thief.get_palette(color_count = palette_len, quality = 1)
+
+            else:
+                palette_from_image = color_thief.get_palette(color_count = 13, quality = 1)
+
+            window_edit = Ui_EditWindow(self, palette_from_image)
+
+            window_edit.exec_()
+
+        else:
+            self.statusBar().showMessage("Nie ma pliku do edycji")
 
     #OPEN IMAGE FROM FILE
     def open_image(self):
@@ -593,15 +607,15 @@ class Ui_MainWindow(QMainWindow):
             self.slider_outline_thickness.setEnabled(False)
             self.slider_outline_threshold.setEnabled(False)
 
-    def change_mode(self, index):
+    def change_mode(self):
 
-        if index == 0 or index == 1:
+        if self.mode_combobox.currentIndex() == 0 or self.mode_combobox.currentIndex() == 1:
 
             self.slider_colorcount.show()
             self.button_palette.hide()
             self.label_palette.hide()
 
-            if self.slider_colorcount.slider.value != 0:
+            if self.slider_colorcount.slider.value() != 0:
                 self.start_processing()
 
         else:

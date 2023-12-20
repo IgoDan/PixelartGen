@@ -15,7 +15,7 @@ class Slider(QWidget):
         self.slider.setValue(base)
         self.slider.setSingleStep(1)
 
-        self.prev_value = -999
+        self.prev_value = base
 
         sliderVbox = QVBoxLayout()
         sliderVbox.setContentsMargins(0, 0, 0, 0)
@@ -49,7 +49,7 @@ class Slider(QWidget):
 
     def event_mouse_release(self, event):
 
-        if event.button() == Qt.LeftButton and self.prev_value != self.slider.value():
+        if event.button() == Qt.LeftButton and self.slider.value() != self.prev_value:
 
             self.parent().start_processing()
             self.parent().save_history()

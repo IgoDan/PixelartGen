@@ -1,8 +1,8 @@
 import sys, os
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QPalette
 from Ui_MainWindow import Ui_MainWindow
+
 from pathlib import Path
 
 if __name__ == "__main__":
