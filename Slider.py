@@ -1,3 +1,4 @@
+from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QSlider
 from PySide6.QtCore import Qt
 
@@ -12,6 +13,9 @@ class Slider(QWidget):
         self.slider.setMinimum(min)
         self.slider.setMaximum(max)
         self.slider.setValue(base)
+        self.slider.setSingleStep(1)
+
+        self.prev_value = -999
 
         sliderVbox = QVBoxLayout()
         sliderVbox.setContentsMargins(0, 0, 0, 0)
@@ -40,3 +44,14 @@ class Slider(QWidget):
         self.setGeometry(100, 50, 300, 50)
         self.slider.valueChanged.connect(value.setNum)
         self.show()
+
+        self.slider.mouseReleaseEvent = self.event_mouse_release
+
+    def event_mouse_release(self, event):
+
+        if event.button() == Qt.LeftButton and self.prev_value != self.slider.value():
+
+            self.parent().start_processing()
+            self.parent().save_history()
+
+            self.prev_value = self.slider.value()

@@ -1,9 +1,8 @@
+import cv2, imghdr, os, numpy as np
+
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QRect, QRunnable
 from PySide6.QtGui import QPixmap
-import cv2, numpy as np
-import imghdr
-import os
 
 class Viewer(QWidget, QRunnable):
 
@@ -11,7 +10,7 @@ class Viewer(QWidget, QRunnable):
         super().__init__(parent)
         self.setAcceptDrops(True)
 
-        self.mainLayout = QVBoxLayout()
+        self.layout = QVBoxLayout()
 
         self.source = QLabel()
         self.source.setGeometry(QRect(700, 50, 440, 330))
@@ -25,47 +24,50 @@ class Viewer(QWidget, QRunnable):
         self.preview.setText('\n\n Tu wyświetli się podgląd \n\n')
         self.preview.setStyleSheet('''QLabel{border: 4px dashed #aaa}''')
 
-        self.mainLayout.addWidget(self.source)
-        self.mainLayout.addWidget(self.preview)
-        self.setLayout(self.mainLayout)
+        self.layout.addWidget(self.source)
+        self.layout.addWidget(self.preview)
+        self.setLayout(self.layout)
 
         self.show()
 
         self.changes = 0
-        self.maxChanges = -1
+        self.max_changes = -1
         self.default_settings = [8, True, 0, 0, 0, 0, 0, 0, False, 1, 200]
-        self.previewHistory = []
+        self.preview_history = []
 
-        self.rgb_pal = []
+        self.color_palette = []
 
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasImage:
 
+        if event.mimeData().hasImage:
             event.accept()
+
         else:
             event.ignore()
 
 
     def dropEvent(self, event):
+
         if event.mimeData().hasImage:
 
             event.setDropAction(Qt.CopyAction)
             file_path = event.mimeData().urls()[0].toLocalFile()
 
-            self.parent().LoadImage(file_path)
+            self.parent().load_image(file_path)
 
             event.accept()
+
         else:
             event.ignore()
 
-    def setImage(self, file_path):
+    def set_image(self, file_path):
 
         if file_path == "":
             return
 
-        fmt = imghdr.what(file_path)
-        img = QPixmap(file_path, format = fmt)
+        file_format = imghdr.what(file_path)
+        img = QPixmap(file_path, format = file_format)
 
         w, h = img.width(), img.height()
 
@@ -79,7 +81,7 @@ class Viewer(QWidget, QRunnable):
         self.src = cv2.imread(file_path)
         cv2.imwrite("source.png", self.src)
 
-    def setPreview(self):
+    def set_preview(self):
         img = QPixmap(os.getcwd() + "\pixelart.png")
 
         w, h = img.width(), img.height()
@@ -89,11 +91,11 @@ class Viewer(QWidget, QRunnable):
         else:
             self.preview.setPixmap(img.scaledToWidth(self.source.width() - 10))
 
-    def copySource(self):
+    def copy_source(self):
         img = cv2.imread(os.getcwd() + "\source.png")
         cv2.imwrite("pixelart.png", img)
 
-    def Pixelate(self, factor, resize):
+    def pixelate(self, factor, resize):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
@@ -106,7 +108,7 @@ class Viewer(QWidget, QRunnable):
 
         cv2.imwrite("pixelart.png", pixelart)
 
-    def ColorReduce(self, count):
+    def color_reduce(self, count):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
         imgf = np.float32(img).reshape(-1, 3)
@@ -116,7 +118,7 @@ class Viewer(QWidget, QRunnable):
 
         center = np.uint8(center)
 
-        pal_rgb = center.tolist()
+        self.color_palette = center.tolist()
 
         pixelart = center[label.flatten()]
 
@@ -124,7 +126,7 @@ class Viewer(QWidget, QRunnable):
 
         cv2.imwrite("pixelart.png", pixelart)
 
-    def ColorReduceDither(self, count):
+    def color_reduce_dither(self, count):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
@@ -134,17 +136,16 @@ class Viewer(QWidget, QRunnable):
         compactness, label, center = cv2.kmeans(imgf, count, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
 
         center = np.uint8(center)
-        pal_rgb = center.tolist()
+        self.color_palette = center.tolist()
 
-        print(pal_rgb)
+        print(self.color_palette)
 
         counter = 0
 
-        for color in pal_rgb:
+        for color in self.color_palette:
             color[0], color[1], color[2] = color[2], color[1], color[0]
 
-        h = img.shape[0]
-        w = img.shape[1]
+        h, w = img.shape[0], img.shape[1]
 
         for y in range(h):
             for x in range(w):
@@ -152,7 +153,7 @@ class Viewer(QWidget, QRunnable):
                 r, g, b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
 
                 #Checking color palette for closest color
-                new_color = self.FindClosestColor(r, g, b, pal_rgb)
+                new_color = self.find_closest_color(r, g, b, self.color_palette)
 
                 img[y, x, 2], img[y, x, 1], img[y, x, 0] = new_color
 
@@ -180,46 +181,82 @@ class Viewer(QWidget, QRunnable):
                     counter = 0
 
                     cv2.imwrite("pixelart.png", img)
-                    self.setPreview()
+                    self.set_preview()
 
         cv2.imwrite("pixelart.png", img)
 
-
-    def ChangeBrightness(self, brightness):
+    def change_brightness(self, brightness):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
-        brightness = brightness * 12.8
 
-        if brightness != 0:
-            if brightness > 0:
-                shadow = brightness
-                highlight = 255
-            else:
-                shadow = 0
-                highlight = 255 + brightness
+        brightness = brightness * (256 / self.parent().slider_brightness.slider.maximum())
 
-            alphaBrightness = (highlight - shadow)/255
-            gammaBrightness = shadow
+        if brightness > 0:
+            shadow = brightness
+            highlight = 255
+                
+        else:
+            shadow = 0
+            highlight = 255 + brightness
 
-            img = cv2.addWeighted(img, alphaBrightness, img, 0, gammaBrightness)
+        alphaBrightness = (highlight - shadow)/255
+        gammaBrightness = shadow
 
+        img = cv2.addWeighted(img, alphaBrightness, img, 0, gammaBrightness)
+        
         cv2.imwrite("pixelart.png", img)
 
-    def ChangeContrast(self, contrast):
+    def change_contrast(self, contrast):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
-        contrast = contrast * 6.4
 
-        if contrast != 0:
-            f = 131 * (contrast + 127) / (127 * (131 - contrast))
-            alphaContrast = float(f)
-            gammaContrast = float(127 * (1 - f))
+        contrast = contrast * (128 / self.parent().slider_contrast.slider.maximum())
 
-            img = cv2.addWeighted(img, alphaContrast, img, 0, gammaContrast)
+        f = 131 * (contrast + 127) / (127 * (131 - contrast))
+        alphaContrast = float(f)
+        gammaContrast = float(127 * (1 - f))
+
+        img = cv2.addWeighted(img, alphaContrast, img, 0, gammaContrast)
 
         cv2.imwrite("pixelart.png", img)
 
-    def SmoothImage(self, factor):
+    def change_saturation(self, value):
+
+        img = cv2.imread(os.getcwd() + "\pixelart.png")
+
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        #SCALED SATURATION ADJUSTMENT
+        len_y = len(hsv[:,:,1])
+        len_x = len(hsv[:,:,1][0])  
+
+        print(hsv[:,:,1][0, 0:10])
+
+        if value > 0:
+            slider_plus_ratio = (value / self.parent().slider_saturation.slider.maximum())
+            for y in range(len_y):
+                for x in range(len_x):
+                    hsv[:,:,1][y, x] += (255- hsv[:,:,1][y, x]) * slider_plus_ratio
+
+        else:
+            slider_minus_ratio = (value / self.parent().slider_saturation.slider.minimum())
+            for y in range(len_y):
+                for x in range(len_x):
+                    hsv[:,:,1][y, x] -= hsv[:,:,1][y, x] * slider_minus_ratio
+
+        """ #LINEAR SATURATION ADJUSTMENT
+        s = hsv[:,:,1] * (1 + value / 20)
+        s = np.clip(s, 0, 255)
+        print(s)
+        hsv[:,:,1] = s
+
+        print(s[0][0:10]) """
+
+        saturated = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+        cv2.imwrite("pixelart.png", saturated)
+
+    def smooth_image(self, factor):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
@@ -229,33 +266,19 @@ class Viewer(QWidget, QRunnable):
 
         cv2.imwrite("pixelart.png", smoothed)
 
-    def CreateOutline(self, thickness, threshold):
+    def create_outline(self, thickness, threshold):
 
         img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_blurred = cv2.GaussianBlur(src=img_gray, ksize=(3, 3), sigmaX=0.5)
+        img_blurred = cv2.GaussianBlur(src=img_gray, ksize=(5, 5), sigmaX=0.5)
+
         edges = cv2.Canny(img_blurred, threshold, 255, L2gradient=False)
 
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
         cv2.drawContours(img, contours, -1, (0, 0, 0), thickness)
 
         cv2.imwrite("pixelart.png", img)
-
-    def ChangeSaturation(self, value):
-
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-        s = hsv[:,:,1] * (1 + value / 10)
-        s = np.clip(s, 0, 255)
-        hsv[:,:,1] = s
-
-        saturated = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-
-        cv2.imwrite("pixelart.png", saturated)
 
     def LoadPalette(self, dir):
         
@@ -278,7 +301,7 @@ class Viewer(QWidget, QRunnable):
 
         return pal_rgb
     
-    def FindClosestColor(self, r, g, b, color_palette):
+    def find_closest_color(self, r, g, b, color_palette):
 
         old_color = [r, g, b]
         new_color = color_palette[0]
@@ -307,13 +330,13 @@ class Viewer(QWidget, QRunnable):
             for x in range(0, w):
                 r,g,b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
 
-                new_color = self.FindClosestColor(r, g, b, pal_rgb)
+                new_color = self.find_closest_color(r, g, b, pal_rgb)
 
                 img[y, x, 2], img[y, x, 1], img[y, x, 0] = new_color
 
         cv2.imwrite("pixelart.png", img)
 
-        self.setPreview()
+        self.set_preview()
 
     def ChangePaletteDither(self, dir):
 
@@ -332,7 +355,7 @@ class Viewer(QWidget, QRunnable):
                 r, g, b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
 
                 #Checking color palette for closest color
-                new_color = self.FindClosestColor(r, g, b, pal_rgb)
+                new_color = self.find_closest_color(r, g, b, pal_rgb)
 
                 img[y, x, 2], img[y, x, 1], img[y, x, 0] = new_color
 
@@ -362,8 +385,8 @@ class Viewer(QWidget, QRunnable):
                     counter = 0
 
                     cv2.imwrite("pixelart.png", img)
-                    self.setPreview()
+                    self.set_preview()
 
         cv2.imwrite("pixelart.png", img)
 
-        self.setPreview()
+        self.set_preview()

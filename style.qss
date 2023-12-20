@@ -1,0 +1,40 @@
+QMainWindow {
+    background-color: #222222;
+}
+
+QLabel {
+    color: #888888;
+}
+
+QCheckBox::indicator:checked {
+    background: transparent;
+    background-color: transparent;
+    color: #222222;
+    border: 1px solid #666666;
+}
+
+QCheckBox::indicator {
+    color: #222222;
+}
+
+QSlider::groove:horizontal {
+    background-color: #444444;
+    border: 0px solid #424242;
+    height: 5px;
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    background-color: #666666;
+    border: 2px solid #000000;
+    width: 16px;
+    height: 20px;
+    line-height: 20px;
+    margin-top: -5px;
+    margin-bottom: -5px;
+    border-radius: 10px;
+}
+
+QSlider::handle::horizontal_hover {
+    border-radius: 10px;
+}

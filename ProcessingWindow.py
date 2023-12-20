@@ -11,15 +11,16 @@ class ProcessingWindow(QDialog):
         self.setModal(True)
         self.setWindowTitle("...")
         self.setFixedSize(140, 70)
+        self.setWindowFlags(Qt.WindowType.SplashScreen)
+
         layout = QVBoxLayout(self)
+
         self.label = QLabel("Przetwarzanie...", self)
         layout.addWidget(self.label, alignment=Qt.AlignCenter)
-        self.setWindowFlags(Qt.WindowType.SplashScreen)
 
     def center(self):
 
-        parent_rect = self.parent().geometry()
-        parent_center = parent_rect.center()
+        parent_center = self.parent().geometry().center()
 
         dialog_rect = self.geometry()
         dialog_rect.moveCenter(parent_center)

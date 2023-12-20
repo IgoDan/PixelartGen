@@ -3,11 +3,10 @@ import os, cv2
 from PySide6.QtCore import QRect, QThreadPool, QMetaObject
 from PySide6.QtWidgets import QLabel, QStatusBar, QMainWindow, QFileDialog, QCheckBox, QComboBox, QPushButton, QFrame, QMessageBox, QDialog
 
-from History import History
 from Viewer import Viewer
 from Slider import Slider
 from ProcessingWindow import ProcessingWindow
-from Ui_RenderWindow import Ui_RenderWindow
+from Ui_EditWindow import Ui_EditWindow
 
 class Ui_MainWindow(QMainWindow):
 
@@ -18,180 +17,195 @@ class Ui_MainWindow(QMainWindow):
         self.app = app
 
         #TITLE BAR
-        self.setWindowTitle("PixelartGen")
+        self.setWindowTitle("Pixelart Gen")
         self.showMaximized()
         self.setFixedSize(1024,768)
 
         #MENU BAR - FILE
-        menuBar = self.menuBar()
-        menuBar.setObjectName("menuBar")
-        menuBar.setGeometry(QRect(0, 0, 1024, 20))
+        menu_bar = self.menuBar()
+        menu_bar.setObjectName("menu_bar")
+        menu_bar.setGeometry(QRect(0, 0, 1024, 20))
 
-        self.fileMenu = menuBar.addMenu("&Plik")
+        self.file_menu = menu_bar.addMenu("&Plik")
 
-        openAction = self.fileMenu.addAction("Otwórz plik")
-        openAction.triggered.connect(self.OpenImage)
+        open_action = self.file_menu.addAction("Otwórz plik")
+        open_action.triggered.connect(self.open_image)
 
-        saveAction = self.fileMenu.addAction("Zapisz jako")
-        saveAction.triggered.connect(self.SaveImage)
+        save_action = self.file_menu.addAction("Zapisz jako")
+        save_action.triggered.connect(self.save_image)
 
-        quitAction = self.fileMenu.addAction("Zamknij")
-        quitAction.triggered.connect(self.QuitApp)
+        quit_action = self.file_menu.addAction("Zamknij")
+        quit_action.triggered.connect(self.quit_app)
 
         #MENU BAR - EDIT
-        self.editMenu = menuBar.addMenu("&Edycja")
+        self.edit_menu = menu_bar.addMenu("&Edycja")
 
-        undoAction = self.editMenu.addAction("Cofnij")
-        undoAction.triggered.connect(self.Undo)
+        undo_action = self.edit_menu.addAction("Cofnij")
+        undo_action.triggered.connect(self.undo)
 
-        redoAction = self.editMenu.addAction("Ponów")
-        redoAction.triggered.connect(self.Redo)
+        redo_action = self.edit_menu.addAction("Ponów")
+        redo_action.triggered.connect(self.redo)
 
-        resetAction = self.editMenu.addAction("Resetuj")
-        resetAction.triggered.connect(self.Reset)
+        reset_action = self.edit_menu.addAction("Resetuj")
+        reset_action.triggered.connect(self.reset)
 
         #PIXELATE FACTOR SLIDER
-        self.sliderPixelate = Slider(self, 4, 64, 8, "Pikselizacja")
-        self.sliderPixelate.setGeometry(QRect(80, 60, 350, 60))
-        self.sliderPixelate.slider.update()
+        self.slider_pixelation = Slider(self, 2, 48, 8, "Pikselizacja")
+        self.slider_pixelation.setGeometry(QRect(80, 40, 350, 60))
+        self.slider_pixelation.slider.update()
 
-        self.sliderPixelate.slider.sliderReleased.connect(self.StartProcessing)
-        self.sliderPixelate.slider.sliderReleased.connect(self.SaveHistory)
+        #self.slider_pixelation.slider.sliderReleased.connect(self.start_processing)
+        #self.slider_pixelation.slider.sliderReleased.connect(self.save_history)
 
         #RESIZE CHECKBOX
-        self.checkboxResize = QCheckBox(parent = self,text = "Zmniejsz realne wymiary zdjęcia")
-        self.checkboxResize.setGeometry(QRect(100, 100, 350, 60))
-        self.checkboxResize.setChecked(True)
-        self.checkboxResize.show()
+        self.checkbox_resize = QCheckBox(parent = self,text = "Zmniejsz realne wymiary obrazu (zalecane)")
+        self.checkbox_resize.setGeometry(QRect(100, 80, 350, 60))
+        self.checkbox_resize.setChecked(True)
+        self.checkbox_resize.show()
 
-        self.checkboxResize.stateChanged.connect(self.StartProcessing)
-        self.checkboxResize.clicked.connect(self.SaveHistory)
+        self.checkbox_resize.stateChanged.connect(self.start_processing)
+        self.checkbox_resize.clicked.connect(self.save_history)
 
         #SMOOTHING SLIDER
-        self.sliderSmoothing = Slider(self, 0, 8, 0, "Wygładzanie")
-        self.sliderSmoothing.setGeometry(QRect(80, 140, 350, 60))
+        self.slider_smoothing = Slider(self, 0, 16, 0, "Wygładzanie")
+        self.slider_smoothing.setGeometry(QRect(80, 120, 350, 60))
 
-        self.sliderSmoothing.slider.sliderReleased.connect(self.StartProcessing)
-        self.sliderSmoothing.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_smoothing.slider.sliderReleased.connect(self.start_processing)
+        self.slider_smoothing.slider.sliderReleased.connect(self.save_history)
 
-        #CATEGORY 2 FRAME
-        self.qframe1 = QFrame(parent = self)
-        self.qframe1.setGeometry(QRect(80, 180, 350, 50))
-        self.qframe1.setFrameShape(QFrame.HLine)
-        self.qframe1.setFrameShadow(QFrame.Sunken)
-        self.qframe1.show()
+        #CATEGORY 1_2 FRAME
+        self.frame1_2 = QFrame(parent = self)
+        self.frame1_2.setGeometry(QRect(80, 160, 350, 50))
+        self.frame1_2.setFrameShape(QFrame.HLine)
+        self.frame1_2.setFrameShadow(QFrame.Sunken)
+        self.frame1_2.show()
 
         #COLOR REDUCE MODE COMBOBOX
-        self.modeComboBox = QComboBox(parent = self)
-        self.modeComboBox.addItems(["Adaptywny", "Z pliku", "Adaptywny + Dither", "Z pliku + Dither"])
-        self.modeComboBox.setGeometry(QRect(80, 220, 350, 40))
-        self.modeComboBox.show()
+        self.mode_combobox = QComboBox(parent = self)
+        self.mode_combobox.addItems(["Adaptywny", "Adaptywny + Dither", "Z pliku", "Z pliku + Dither"])
+        self.mode_combobox.setGeometry(QRect(80, 200, 350, 40))
+        self.mode_combobox.show()
 
-        self.modeComboBox.currentIndexChanged.connect(self.ModeChange)
-        self.modeComboBox.activated.connect(self.SaveHistory)
+        self.mode_combobox.currentIndexChanged.connect(self.change_mode)
+        self.mode_combobox.activated.connect(self.save_history)
 
         #COLORS REDUCE SLIDER
-        self.sliderColorcount = Slider(self, 0, 16, 0, "Redukcja barw")
-        self.sliderColorcount.setGeometry(QRect(80, 260, 350, 60))
+        self.slider_colorcount = Slider(self, 0, 32, 0, "Redukcja barw")
+        self.slider_colorcount.setGeometry(QRect(80, 240, 350, 60))
 
-        self.sliderColorcount.slider.sliderReleased.connect(self.StartProcessing)
-        self.sliderColorcount.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_colorcount.slider.sliderReleased.connect(self.start_processing)
+        self.slider_colorcount.slider.sliderReleased.connect(self.save_history)
 
         #COLOR PALETTE OPEN BUTTON
-        self.paletteButton = QPushButton("Wybierz plik", self)
-        self.paletteButton.setGeometry(QRect(80, 265, 350, 25))
+        self.button_palette = QPushButton("Wybierz plik", self)
+        self.button_palette.setGeometry(QRect(80, 250, 350, 25))
 
-        self.paletteButton.clicked.connect(self.OpenPaletteFile)
+        self.button_palette.clicked.connect(self.open_palette_file)
 
         #COLOR PALETTE LABEL
-        self.paletteLabel = QLabel(parent = self)
-        self.paletteLabel.setFrameStyle(QFrame.Panel)
-        self.paletteLabel.setGeometry(QRect(80, 295, 350, 20))
-        self.paletteLabel.setText("")
+        self.label_palette = QLabel(parent = self)
+        self.label_palette.setFrameStyle(QFrame.Panel)
+        self.label_palette.setGeometry(QRect(80, 280, 350, 20))
+        self.label_palette.setText("")
 
-        #CATEGORY 3
-        self.qframe1 = QFrame(parent = self)
-        self.qframe1.setGeometry(QRect(80, 300, 350, 50))
-        self.qframe1.setFrameShape(QFrame.HLine)
-        self.qframe1.setFrameShadow(QFrame.Sunken)
-        self.qframe1.show()
+        #CATEGORY 2_3 FRAME
+        self.frame2_3 = QFrame(parent = self)
+        self.frame2_3.setGeometry(QRect(80, 290, 350, 50))
+        self.frame2_3.setFrameShape(QFrame.HLine)
+        self.frame2_3.setFrameShadow(QFrame.Sunken)
+        self.frame2_3.show()
+
+        #EFFECTS ORDER CHECKBOX
+        self.checkbox_effects_order = QCheckBox(parent = self,text = "Filtry przed zmianą palety")
+        self.checkbox_effects_order.setGeometry(QRect(100, 310, 350, 60))
+        self.checkbox_effects_order.setChecked(True)
+        self.checkbox_effects_order.show()
+
+        self.checkbox_effects_order.stateChanged.connect(self.start_processing)
+        self.checkbox_effects_order.clicked.connect(self.save_history)
 
         #BRIGHTNESS SLIDER
-        self.sliderBrightness = Slider(self, -10, 10, 0, "Jasność")
-        self.sliderBrightness.setGeometry(QRect(80, 330, 350, 60))
+        self.slider_brightness = Slider(self, -20, 20, 0, "Jasność")
+        self.slider_brightness.setGeometry(QRect(80, 350, 350, 60))
 
-        self.sliderBrightness.slider.sliderReleased.connect(self.StartProcessing)
-        self.sliderBrightness.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_brightness.slider.sliderReleased.connect(self.start_processing)
+        self.slider_brightness.slider.sliderReleased.connect(self.save_history)
 
         #CONTRAST SLIDER
-        self.sliderContrast = Slider(self, -10, 10, 0, "Kontrast")
-        self.sliderContrast.setGeometry(QRect(80, 380, 350, 60))
+        self.slider_contrast = Slider(self, -20, 20, 0, "Kontrast")
+        self.slider_contrast.setGeometry(QRect(80, 400, 350, 60))
 
-        self.sliderContrast.slider.sliderReleased.connect(self.StartProcessing)
-        self.sliderContrast.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_contrast.slider.sliderReleased.connect(self.start_processing)
+        self.slider_contrast.slider.sliderReleased.connect(self.save_history)
 
         #SATURATION SLIDER
-        self.sliderSaturation = Slider(self, -10, 10, 0, "Nasycenie")
-        self.sliderSaturation.setGeometry(QRect(80, 430, 350, 60))
+        self.slider_saturation = Slider(self, -20, 20, 0, "Nasycenie")
+        self.slider_saturation.setGeometry(QRect(80, 450, 350, 60))
 
-        self.sliderSaturation.slider.sliderReleased.connect(self.StartProcessing)
-        self.sliderSaturation.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_saturation.slider.sliderReleased.connect(self.start_processing)
+        self.slider_saturation.slider.sliderReleased.connect(self.save_history)
 
-        #CATEGORY 3
-        self.qframe1 = QFrame(parent = self)
-        self.qframe1.setGeometry(QRect(80, 480, 350, 50))
-        self.qframe1.setFrameShape(QFrame.HLine)
-        self.qframe1.setFrameShadow(QFrame.Sunken)
-        self.qframe1.show()
+        #CATEGORY 3_4 FRAME
+        self.frame3_4 = QFrame(parent = self)
+        self.frame3_4.setGeometry(QRect(80, 490, 350, 50))
+        self.frame3_4.setFrameShape(QFrame.HLine)
+        self.frame3_4.setFrameShadow(QFrame.Sunken)
+        self.frame3_4.show()
 
         #OUTLINE CHECKBOX
-        self.checkboxOutline = QCheckBox(parent = self,text = "Dodaj kontur")
-        self.checkboxOutline.setGeometry(QRect(100, 510, 350, 60))
-        self.checkboxOutline.show()
+        self.checkbox_outline = QCheckBox(parent = self,text = "Dodaj kontur")
+        self.checkbox_outline.setGeometry(QRect(100, 510, 350, 60))
+        self.checkbox_outline.show()
 
-        self.checkboxOutline.stateChanged.connect(self.StartProcessing)
-        self.checkboxOutline.stateChanged.connect(self.ShowOutlineSlider)
-        self.checkboxOutline.clicked.connect(self.SaveHistory)
+        self.checkbox_outline.stateChanged.connect(self.start_processing)
+        self.checkbox_outline.stateChanged.connect(self.show_outline_slider)
+        self.checkbox_outline.clicked.connect(self.save_history)
 
         #OUTLINE THICKNESS SLIDER
         self.slider_outline_thickness = Slider(self, 1, 8, 1, "Grubość konturu")
         self.slider_outline_thickness.setGeometry(QRect(80, 550, 350, 60))
 
-        self.slider_outline_thickness.slider.sliderReleased.connect(self.StartProcessing)
-        self.slider_outline_thickness.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_outline_thickness.slider.sliderReleased.connect(self.start_processing)
+        self.slider_outline_thickness.slider.sliderReleased.connect(self.save_history)
 
         self.slider_outline_thickness.setEnabled(False)
 
         #OUTLINE THRESHOLD SLIDER
-        self.slider_outline_threshold = Slider(self, 0, 255, 180, "Grubość konturu")
-        self.slider_outline_threshold.setGeometry(QRect(80, 590, 350, 60))
+        self.slider_outline_threshold = Slider(self, 0, 255, 180, "Progowy kontrast konturu")
+        self.slider_outline_threshold.setGeometry(QRect(80, 600, 350, 60))
 
-        self.slider_outline_threshold.slider.sliderReleased.connect(self.StartProcessing)
-        self.slider_outline_threshold.slider.sliderReleased.connect(self.SaveHistory)
+        self.slider_outline_threshold.slider.sliderReleased.connect(self.start_processing)
+        self.slider_outline_threshold.slider.sliderReleased.connect(self.save_history)
 
         self.slider_outline_threshold.setEnabled(False)
 
-        # NEW WINDOW BUTTON
-        self.newWindowButton = QPushButton("Renderuj obraz", self)
-        self.newWindowButton.setGeometry(QRect(80, 640, 350, 40))
-        self.newWindowButton.show()
+        #CATEGORY 4_5 FRAME
+        self.frame4_5 = QFrame(parent = self)
+        self.frame4_5.setGeometry(QRect(80, 640, 350, 50))
+        self.frame4_5.setFrameShape(QFrame.HLine)
+        self.frame4_5.setFrameShadow(QFrame.Sunken)
+        self.frame4_5.show()
 
-        self.newWindowButton.clicked.connect(self.OpenRenderWindow)
+        #EDIT WINDOW BUTTON
+        self.button_edit_window = QPushButton("Renderuj obraz", self)
+        self.button_edit_window.setGeometry(QRect(80, 680, 350, 40))
+        self.button_edit_window.show()
+
+        self.button_edit_window.clicked.connect(self.open_edit_window)
 
         #VIEWER
         self.threadpool = QThreadPool()
         self.viewer = Viewer(self)
         self.viewer.setGeometry(QRect(480, 50, 480, 680))
 
-        self.threadpool.start(self.viewer.Pixelate)
+        #THREADPOOL
+        self.threadpool.start(self.viewer.pixelate)
 
-        self.processingWindow = ProcessingWindow(self)
+        #EDIT WINDOW
+        self.window_processing = ProcessingWindow(self)
 
         #STATUSBAR
         self.setStatusBar(QStatusBar(self))
-
-        #HISTORY
-        self.history = History(self)
 
     #APP WINDOW CLOSE
     def closeEvent(self, event):
@@ -202,7 +216,6 @@ class Ui_MainWindow(QMainWindow):
                                      QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-
             if os.path.exists("source.png"):
                 os.remove("source.png")
 
@@ -213,40 +226,38 @@ class Ui_MainWindow(QMainWindow):
         else:
             event.ignore()
 
-    def OpenRenderWindow(self):
+    #MOVE TO EDIT WINDOW
+    def open_edit_window(self):
 
-        rednerWindow = Ui_RenderWindow(self)
-        rednerWindow.exec_()
+        window_edit = Ui_EditWindow(self)
+        window_edit.exec_()
 
     #OPEN IMAGE FROM FILE
-    def OpenImage(self):
+    def open_image(self):
 
-        openLocation = QFileDialog.getOpenFileName()
+        open_location = QFileDialog.getOpenFileName()
 
-        self.LoadImage(openLocation[0])
-
-        #TEST
-        self.history.InitializeHistory()
-        print(self.history.previewHistory)
+        self.load_image(open_location[0])
 
     #LOAD IMAGE FROM GIVEN LOCATION
-    def LoadImage(self, openLocation):
+    def load_image(self, openLocation):
 
         if openLocation is None:
             self.statusBar().showMessage("Nie udało się otworzyć pliku")
             return
         
-        self.viewer.setImage(openLocation)
+        self.viewer.set_image(openLocation)
 
         try:
-            self.InitializeHistory()
-            self.ApplyEffects()
+            self.initialize_history()
+            self.start_processing()
+
             self.statusBar().showMessage("Plik został poprawnie otwarty")
         except:
             self.statusBar().showMessage("Nie udało się otworzyć pliku")
 
     #SAVE IMAGE TO FILE
-    def SaveImage(self):
+    def save_image(self):
 
         if not os.path.exists("pixelart.png"):
             self.statusBar().showMessage("Brak obrazu do zapisania")
@@ -261,106 +272,122 @@ class Ui_MainWindow(QMainWindow):
             self.statusBar().showMessage("Anulowano zapis pliku")
 
     #CLOSE APP
-    def QuitApp(self):
+    def quit_app(self):
 
         self.app.quit()
 
-    def StartProcessing(self):
+    #NEW PROCESSING THREAD FOR CALCULATING EFFECTS - EXECUTES APPLY_EFFECTS
+    def start_processing(self):
 
         if not os.path.exists("source.png"):
             self.statusBar().showMessage("Przed rozpoczęciem edycji otwórz obraz")
             return
         
-        #NEW PROCESSING THREAD
-        self.threadpool.start(self.ApplyEffects)
+        self.threadpool.start(self.apply_effects)
 
-        self.processingWindow.center()
-        self.processingWindow.show()
+        self.window_processing.center()
+        self.window_processing.show()
     
-    def ApplyEffects(self):
+    def apply_effects(self):
 
         if not os.path.exists("source.png"):
             return False
 
-        self.viewer.copySource()
+        self.viewer.copy_source()
 
-        if self.sliderSmoothing.slider.value() != 0:
-            self.viewer.SmoothImage(self.sliderSmoothing.slider.value()) 
+        if self.slider_smoothing.slider.value() != 0:
+            self.viewer.smooth_image(self.slider_smoothing.slider.value()) 
         
-        if self.sliderPixelate.slider.value() != 1:
-            self.viewer.Pixelate(self.sliderPixelate.slider.value(), self.checkboxResize.isChecked())
+        if self.slider_pixelation.slider.value() != 1:
+            self.viewer.pixelate(self.slider_pixelation.slider.value(), self.checkbox_resize.isChecked())
 
-        if  self.modeComboBox.currentIndex() == 0 and self.sliderColorcount.slider.value() != 0:
-            self.viewer.ColorReduce(self.sliderColorcount.slider.value())
+        if self.checkbox_effects_order.isChecked() == True:
 
-        if self.modeComboBox.currentIndex() == 1 and self.paletteLabel.text() != "":
-            self.viewer.ChangePalette(self.paletteLabel.text())
+            if self.slider_brightness.slider.value() != 0:
+                self.viewer.change_brightness(self.slider_brightness.slider.value())
 
-        if  self.modeComboBox.currentIndex() == 2 and self.sliderColorcount.slider.value() != 0:
-            self.viewer.ColorReduceDither(self.sliderColorcount.slider.value())
+            if self.slider_contrast.slider.value() != 0:
+                self.viewer.change_contrast(self.slider_contrast.slider.value())
 
-        if  self.modeComboBox.currentIndex() == 3 and self.paletteLabel.text() != "":
-            self.viewer.ChangePaletteDither(self.paletteLabel.text())
+            if self.slider_saturation.slider.value() != 0:
+                self.viewer.change_saturation(self.slider_saturation.slider.value())
 
-        if self.sliderBrightness.slider.value() != 0:
-            self.viewer.ChangeBrightness(self.sliderBrightness.slider.value())
+        if  self.mode_combobox.currentIndex() == 0 and self.slider_colorcount.slider.value() != 0:
+            self.viewer.color_reduce(self.slider_colorcount.slider.value())
 
-        if self.sliderContrast.slider.value() != 0:
-            self.viewer.ChangeContrast(self.sliderContrast.slider.value())
+        if  self.mode_combobox.currentIndex() == 1 and self.slider_colorcount.slider.value() != 0:
+            self.viewer.color_reduce_dither(self.slider_colorcount.slider.value())
 
-        if self.sliderSaturation.slider.value() != 0:
-            self.viewer.ChangeSaturation(self.sliderSaturation.slider.value())
+        if self.mode_combobox.currentIndex() == 2 and self.label_palette.text() != "":
+            self.viewer.ChangePalette(self.label_palette.text())
 
-        if self.checkboxOutline.isChecked():
-            self.viewer.CreateOutline(self.slider_outline_thickness.slider.value(), self.slider_outline_threshold.slider.value())
+        if  self.mode_combobox.currentIndex() == 3 and self.label_palette.text() != "":
+            self.viewer.ChangePaletteDither(self.label_palette.text())
 
-        self.viewer.setPreview()
+        if self.checkbox_effects_order.isChecked() == False:
 
-        QMetaObject.invokeMethod(self.processingWindow, "hide")
+            if self.slider_brightness.slider.value() != 0:
+                self.viewer.change_brightness(self.slider_brightness.slider.value())
+
+            if self.slider_contrast.slider.value() != 0:
+                self.viewer.change_contrast(self.slider_contrast.slider.value())
+
+            if self.slider_saturation.slider.value() != 0:
+                self.viewer.change_saturation(self.slider_saturation.slider.value())
+
+        if self.checkbox_outline.isChecked():
+
+            self.viewer.create_outline(self.slider_outline_thickness.slider.value(), self.slider_outline_threshold.slider.value())
+
+        self.viewer.set_preview()
+
+        QMetaObject.invokeMethod(self.window_processing, "hide")
 
         return True
     
-    def InitializeHistory(self):
+    def initialize_history(self):
 
         self.viewer.changes = 0
-        self.viewer.maxChanges = -1
+        self.viewer.max_changes = -1
 
-        self.viewer.previewHistory = [[
-                self.sliderPixelate.slider.value(),
-                self.checkboxResize.isChecked(),
-                self.sliderSmoothing.slider.value(),
-                self.modeComboBox.currentIndex(),
-                self.sliderColorcount.slider.value(),
-                self.sliderBrightness.slider.value(),
-                self.sliderContrast.slider.value(),
-                self.sliderSaturation.slider.value(),
-                self.checkboxOutline.isChecked(),
+        self.viewer.preview_history = [[
+                self.slider_pixelation.slider.value(),
+                self.checkbox_resize.isChecked(),
+                self.slider_smoothing.slider.value(),
+                self.mode_combobox.currentIndex(),
+                self.slider_colorcount.slider.value(),
+                self.checkbox_effects_order.isChecked(),
+                self.slider_brightness.slider.value(),
+                self.slider_contrast.slider.value(),
+                self.slider_saturation.slider.value(),
+                self.checkbox_outline.isChecked(),
                 self.slider_outline_thickness.slider.value(),
                 self.slider_outline_threshold.slider.value()]]
 
-    def SaveHistory(self):
+    def save_history(self):
 
         if not os.path.exists("source.png"):
             return
 
-        if self.viewer.changes + 1 <= self.viewer.maxChanges:
+        if self.viewer.changes + 1 <= self.viewer.max_changes:
 
             self.viewer.changes += 1
 
-            self.viewer.previewHistory = self.viewer.previewHistory[0:(self.viewer.changes + 1)]
+            self.viewer.preview_history = self.viewer.preview_history[0:(self.viewer.changes + 1)]
 
-            self.viewer.maxChanges = len(self.viewer.previewHistory) - 1
+            self.viewer.max_changes = len(self.viewer.preview_history) - 1
 
-            self.viewer.previewHistory[self.viewer.changes] = [
-                self.sliderPixelate.slider.value(),
-                self.checkboxResize.isChecked(),
-                self.sliderSmoothing.slider.value(),
-                self.modeComboBox.currentIndex(),
-                self.sliderColorcount.slider.value(),
-                self.sliderBrightness.slider.value(),
-                self.sliderContrast.slider.value(),
-                self.sliderSaturation.slider.value(),
-                self.checkboxOutline.isChecked(),
+            self.viewer.preview_history[self.viewer.changes] = [
+                self.slider_pixelation.slider.value(),
+                self.checkbox_resize.isChecked(),
+                self.slider_smoothing.slider.value(),
+                self.mode_combobox.currentIndex(),
+                self.slider_colorcount.slider.value(),
+                self.checkbox_effects_order.isChecked(),
+                self.slider_brightness.slider.value(),
+                self.slider_contrast.slider.value(),
+                self.slider_saturation.slider.value(),
+                self.checkbox_outline.isChecked(),
                 self.slider_outline_thickness.slider.value(),
                 self.slider_outline_threshold.slider.value()]
 
@@ -368,220 +395,231 @@ class Ui_MainWindow(QMainWindow):
 
             self.viewer.changes += 1
 
-            self.viewer.previewHistory.append([
-                self.sliderPixelate.slider.value(),
-                self.checkboxResize.isChecked(),
-                self.sliderSmoothing.slider.value(),
-                self.modeComboBox.currentIndex(),
-                self.sliderColorcount.slider.value(),
-                self.sliderBrightness.slider.value(),
-                self.sliderContrast.slider.value(),
-                self.sliderSaturation.slider.value(),
-                self.checkboxOutline.isChecked(),
+            self.viewer.preview_history.append([
+                self.slider_pixelation.slider.value(),
+                self.checkbox_resize.isChecked(),
+                self.slider_smoothing.slider.value(),
+                self.mode_combobox.currentIndex(),
+                self.slider_colorcount.slider.value(),
+                self.checkbox_effects_order.isChecked(),
+                self.slider_brightness.slider.value(),
+                self.slider_contrast.slider.value(),
+                self.slider_saturation.slider.value(),
+                self.checkbox_outline.isChecked(),
                 self.slider_outline_thickness.slider.value(),
                 self.slider_outline_threshold.slider.value()])
 
-        if self.viewer.changes > self.viewer.maxChanges:
-            self.viewer.maxChanges = self.viewer.changes
+        if self.viewer.changes > self.viewer.max_changes:
+            self.viewer.max_changes = self.viewer.changes
 
-        print(self.viewer.previewHistory)
+        print(self.viewer.preview_history)
 
-    def Undo(self):
+    def undo(self):
 
         if self.viewer.changes > 0:
 
             self.viewer.changes -= 1
-            params = self.viewer.previewHistory[self.viewer.changes]
+            params = self.viewer.preview_history[self.viewer.changes]
 
-            self.sliderPixelate.slider.setValue(params[0])
-            self.sliderPixelate.slider.update()
+            self.slider_pixelation.slider.setValue(params[0])
+            self.slider_pixelation.slider.update()
 
-            self.checkboxResize.setChecked(params[1])
-            self.checkboxResize.update()
+            self.checkbox_resize.setChecked(params[1])
+            self.checkbox_resize.update()
 
-            self.sliderSmoothing.slider.setValue(params[2])
-            self.sliderSmoothing.slider.update()
+            self.slider_smoothing.slider.setValue(params[2])
+            self.slider_smoothing.slider.update()
 
-            self.modeComboBox.setCurrentIndex(params[3])
-            self.modeComboBox.update()
+            self.mode_combobox.setCurrentIndex(params[3])
+            self.mode_combobox.update()
 
-            self.sliderColorcount.slider.setValue(params[4])
-            self.sliderColorcount.slider.update()
+            self.slider_colorcount.slider.setValue(params[4])
+            self.slider_colorcount.slider.update()
 
-            self.sliderBrightness.slider.setValue(params[5])
-            self.sliderBrightness.slider.update()
+            self.checkbox_effects_order.setChecked(params[5])
+            self.checkbox_effects_order.update()
 
-            self.sliderContrast.slider.setValue(params[6])
-            self.sliderContrast.slider.update()
+            self.slider_brightness.slider.setValue(params[6])
+            self.slider_brightness.slider.update()
 
-            self.sliderSaturation.slider.setValue(params[7])
-            self.sliderSaturation.slider.update()
+            self.slider_contrast.slider.setValue(params[7])
+            self.slider_contrast.slider.update()
 
-            self.checkboxOutline.setChecked(params[8])
-            self.checkboxOutline.update()
+            self.slider_saturation.slider.setValue(params[8])
+            self.slider_saturation.slider.update()
 
-            self.slider_outline_thickness.slider.setValue(params[9])
+            self.checkbox_outline.setChecked(params[9])
+            self.checkbox_outline.update()
+
+            self.slider_outline_thickness.slider.setValue(params[10])
             self.slider_outline_thickness.slider.update()
 
-            self.slider_outline_threshold.slider.setValue(params[10])
+            self.slider_outline_threshold.slider.setValue(params[11])
             self.slider_outline_threshold.slider.update()
 
-            self.StartProcessing()
+            self.start_processing()
 
         else:
             self.statusBar().showMessage("Brak starszych zmian")
 
-    def Redo(self):
+    def redo(self):
 
-        if self.viewer.changes + 1 <= self.viewer.maxChanges:
+        if self.viewer.changes + 1 <= self.viewer.max_changes:
 
             self.viewer.changes += 1
-            params = self.viewer.previewHistory[self.viewer.changes]
+            params = self.viewer.preview_history[self.viewer.changes]
 
-            self.sliderPixelate.slider.setValue(params[0])
-            self.sliderPixelate.slider.update()
+            self.slider_pixelation.slider.setValue(params[0])
+            self.slider_pixelation.slider.update()
 
-            self.checkboxResize.setChecked(params[1])
-            self.checkboxResize.update()
+            self.checkbox_resize.setChecked(params[1])
+            self.checkbox_resize.update()
 
-            self.sliderSmoothing.slider.setValue(params[2])
-            self.sliderSmoothing.slider.update()
+            self.slider_smoothing.slider.setValue(params[2])
+            self.slider_smoothing.slider.update()
 
-            self.modeComboBox.setCurrentIndex(params[3])
-            self.modeComboBox.update()
+            self.mode_combobox.setCurrentIndex(params[3])
+            self.mode_combobox.update()
 
-            self.sliderColorcount.slider.setValue(params[4])
-            self.sliderColorcount.slider.update()
+            self.slider_colorcount.slider.setValue(params[4])
+            self.slider_colorcount.slider.update()
 
-            self.sliderBrightness.slider.setValue(params[5])
-            self.sliderBrightness.slider.update()
+            self.checkbox_effects_order.setChecked(params[5])
+            self.checkbox_effects_order.update()
 
-            self.sliderContrast.slider.setValue(params[6])
-            self.sliderContrast.slider.update()
+            self.slider_brightness.slider.setValue(params[6])
+            self.slider_brightness.slider.update()
 
-            self.sliderSaturation.slider.setValue(params[7])
-            self.sliderSaturation.slider.update()
+            self.slider_contrast.slider.setValue(params[7])
+            self.slider_contrast.slider.update()
 
-            self.checkboxOutline.setChecked(params[8])
-            self.checkboxOutline.update()
+            self.slider_saturation.slider.setValue(params[8])
+            self.slider_saturation.slider.update()
 
-            self.slider_outline_thickness.slider.setValue(params[9])
+            self.checkbox_outline.setChecked(params[9])
+            self.checkbox_outline.update()
+
+            self.slider_outline_thickness.slider.setValue(params[10])
             self.slider_outline_thickness.slider.update()
 
-            self.slider_outline_threshold.slider.setValue(params[10])
+            self.slider_outline_threshold.slider.setValue(params[11])
             self.slider_outline_threshold.slider.update()
 
-            self.StartProcessing()
+            self.start_processing()
 
         else:
             self.statusBar().showMessage("Brak nowszych zmian")
 
-    def Reset(self):
+    def reset(self):
 
         default_settings = self.viewer.default_settings
 
-        if self.viewer.previewHistory == []:
+        if self.viewer.preview_history == []:
+
             self.statusBar().showMessage("Nie wczytano pliku")
             return
 
-        if self.viewer.previewHistory[self.viewer.changes] == default_settings:
+        if self.viewer.preview_history[self.viewer.changes] == default_settings:
+
             self.statusBar().showMessage("Domyślne wartości są już podane")
             return
 
-        if self.viewer.changes + 1 <= self.viewer.maxChanges:
+        if self.viewer.changes + 1 <= self.viewer.max_changes:
 
             self.viewer.changes += 1
 
-            self.viewer.previewHistory[self.viewer.changes] = default_settings
+            self.viewer.preview_history[self.viewer.changes] = default_settings
 
-            self.viewer.previewHistory = self.viewer.previewHistory[0:(self.viewer.changes + 1)]
+            self.viewer.preview_history = self.viewer.preview_history[0:(self.viewer.changes + 1)]
 
-            self.viewer.maxChanges = len(self.viewer.previewHistory) - 1
+            self.viewer.max_changes = len(self.viewer.preview_history) - 1
 
         else:
+
             self.viewer.changes += 1
 
-            self.viewer.previewHistory.append(default_settings)
+            self.viewer.preview_history.append(default_settings)
 
-            self.sliderPixelate.slider.setValue(default_settings[0])
-            self.sliderPixelate.slider.update()
+            self.slider_pixelation.slider.setValue(default_settings[0])
+            self.slider_pixelation.slider.update()
 
-            self.checkboxResize.setChecked(default_settings[1])
-            self.checkboxResize.update()
+            self.checkbox_resize.setChecked(default_settings[1])
+            self.checkbox_resize.update()
 
-            self.sliderSmoothing.slider.setValue(default_settings[2])
-            self.sliderSmoothing.slider.update()
+            self.slider_smoothing.slider.setValue(default_settings[2])
+            self.slider_smoothing.slider.update()
 
-            self.modeComboBox.setCurrentIndex(default_settings[3])
-            self.modeComboBox.update()
+            self.mode_combobox.setCurrentIndex(default_settings[3])
+            self.mode_combobox.update()
 
-            self.sliderColorcount.slider.setValue(default_settings[4])
-            self.sliderColorcount.slider.update()
+            self.slider_colorcount.slider.setValue(default_settings[4])
+            self.slider_colorcount.slider.update()
 
-            self.sliderBrightness.slider.setValue(default_settings[5])
-            self.sliderBrightness.slider.update()
+            self.checkbox_effects_order.setChecked(default_settings[5])
+            self.checkbox_effects_order.update()
 
-            self.sliderContrast.slider.setValue(default_settings[6])
-            self.sliderContrast.slider.update()
+            self.slider_brightness.slider.setValue(default_settings[6])
+            self.slider_brightness.slider.update()
 
-            self.sliderSaturation.slider.setValue(default_settings[7])
-            self.sliderSaturation.slider.update()
+            self.slider_contrast.slider.setValue(default_settings[7])
+            self.slider_contrast.slider.update()
 
-            self.checkboxOutline.setChecked(default_settings[8])
-            self.checkboxOutline.update()
+            self.slider_saturation.slider.setValue(default_settings[8])
+            self.slider_saturation.slider.update()
 
-            self.slider_outline_thickness.slider.setValue(default_settings[9])
+            self.checkbox_outline.setChecked(default_settings[9])
+            self.checkbox_outline.update()
+
+            self.slider_outline_thickness.slider.setValue(default_settings[10])
             self.slider_outline_thickness.slider.update()
 
-            self.slider_outline_threshold.slider.setValue(default_settings[10])
+            self.slider_outline_threshold.slider.setValue(default_settings[11])
             self.slider_outline_threshold.slider.update()
 
-        self.StartProcessing()
+        self.start_processing()
 
-        if self.viewer.changes > self.viewer.maxChanges:
-            self.viewer.maxChanges = self.viewer.changes
+        if self.viewer.changes > self.viewer.max_changes:
+            self.viewer.max_changes = self.viewer.changes
 
-        print(self.viewer.previewHistory)
+        print(self.viewer.preview_history)
 
-    def ShowOutlineSlider(self):
+    def show_outline_slider(self):
 
-        if self.checkboxOutline.isChecked():
+        if self.checkbox_outline.isChecked():
             self.slider_outline_thickness.setEnabled(True)
             self.slider_outline_threshold.setEnabled(True)
+
         else:
             self.slider_outline_thickness.setEnabled(False)
             self.slider_outline_threshold.setEnabled(False)
 
-    def ModeChange(self, index):
+    def change_mode(self, index):
 
-        if index == 0 or index == 2:
+        if index == 0 or index == 1:
 
-            self.sliderColorcount.show()
-            self.paletteButton.hide()
-            self.paletteLabel.hide()
+            self.slider_colorcount.show()
+            self.button_palette.hide()
+            self.label_palette.hide()
 
-            if self.sliderColorcount.slider.value != 0:
-                self.StartProcessing()
+            if self.slider_colorcount.slider.value != 0:
+                self.start_processing()
 
         else:
 
-            self.sliderColorcount.hide()
-            self.paletteButton.show()
-            self.paletteLabel.show()
+            self.slider_colorcount.hide()
+            self.button_palette.show()
+            self.label_palette.show()
 
-            if self.paletteLabel.text() != "":
-                self.StartProcessing()
+            if self.label_palette.text() != "":
+                self.start_processing()
 
-    def OpenPaletteFile(self):
-
-        #Setting for performance boosting
-        #self.checkboxResize.setChecked(True)
-        #self.checkboxResize.update()
+    def open_palette_file(self):
 
         try:
             paletteLocation = QFileDialog.getOpenFileName()
-            self.paletteLabel.setText(paletteLocation[0])
+            self.label_palette.setText(paletteLocation[0])
+            
         except:
             self.statusBar().showMessage("Nie udało się otworzyć pliku palety barw")
 
-        self.StartProcessing()
+        self.start_processing()
