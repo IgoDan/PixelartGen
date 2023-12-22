@@ -112,6 +112,8 @@ class Viewer(QWidget, QRunnable):
         for y in range(h):
             for x in range(w):
 
+                print(x, y)
+
                 r, g, b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
 
                 #Checking color palette for closest color
@@ -186,6 +188,8 @@ class Viewer(QWidget, QRunnable):
 
         reduced_colors = center.tolist()
         self.parent().palette_reduced = reduced_colors
+
+        print(reduced_colors)
 
         for color in reduced_colors:
             color[0], color[1], color[2] = color[2], color[1], color[0]
@@ -365,10 +369,12 @@ class Viewer(QWidget, QRunnable):
         reduced_colors = self.load_palette(dir)
         self.parent().palette_reduced = reduced_colors
 
+        print(reduced_colors)
+
         h = img.shape[0]
         w = img.shape[1]
 
-        img_dither = self.dither_algorith(img, reduced_colors, h, w)
+        img_dither = self.dither_algorithm(img, reduced_colors, h, w)
 
         cv2.imwrite("pixelart.png", img_dither)
 

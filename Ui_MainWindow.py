@@ -225,19 +225,21 @@ class Ui_MainWindow(QMainWindow):
 
         if os.path.exists("pixelart.png"):
 
-            color_thief = ColorThief("./pixelart.png")
-
             if (self.slider_colorcount.slider.value() != 0 and (self.mode_combobox.currentIndex() == 0 or self.mode_combobox.currentIndex() == 1)) or (self.mode_combobox.currentIndex() == 2 or self.mode_combobox.currentIndex() == 3):
-                
-                #LEN COUNT ALL 3 RGB VALUES IN
-                palette_len = len(self.palette_reduced) % 12 + 1
 
-                print(palette_len)
+                if len(self.palette_reduced) > 20:
+                    palette_from_image = self.palette_reduced[0:20]
 
-                palette_from_image = color_thief.get_palette(color_count = palette_len, quality = 1)
+                else:
+                    palette_from_image = self.palette_reduced
+
+                for i in range(len(palette_from_image)):
+                    palette_from_image[i] = (palette_from_image[i][0], palette_from_image[i][1], palette_from_image[i][2])
 
             else:
-                palette_from_image = color_thief.get_palette(color_count = 13, quality = 1)
+
+                color_thief = ColorThief("./pixelart.png")
+                palette_from_image = color_thief.get_palette(color_count = 11, quality = 1)
 
             window_edit = Ui_EditWindow(self, palette_from_image)
 

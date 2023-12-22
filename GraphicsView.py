@@ -13,11 +13,18 @@ class GraphicsView(QGraphicsView):
 
         self.setOptimizationFlag(QGraphicsView.DontSavePainterState, True)
 
+        self.scale(self.parent().initial_zoom, self.parent().initial_zoom)
+        
+        self.offset = 0
+
     def wheelEvent(self, event: QWheelEvent):
 
         factor = 1.25
 
-        if event.angleDelta().y() < 0:
+        if event.angleDelta().y() < 0 and self.offset > -8:
             self.scale(1 / factor, 1 / factor)
-        else:
+            self.offset -= 1
+
+        elif event.angleDelta().y() > 0 and self.offset < 16:
             self.scale(factor, factor)
+            self.offset += 1

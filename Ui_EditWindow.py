@@ -2,7 +2,7 @@ import os
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem, QDialog, QVBoxLayout, QPushButton, QColorDialog, QHBoxLayout, QWidget, QSizePolicy
 from PySide6.QtGui import QImage, QPixmap, QPainter, QColor
-from PySide6.QtCore import Qt, QRect, QSize
+from PySide6.QtCore import Qt, QRect, QSize, QRectF
 
 from GraphicsView import GraphicsView
 
@@ -22,12 +22,12 @@ class ScalableColorPalette(QWidget):
         for color in self.parent().palette_from_image:
 
             color_button = QPushButton()
-            color_button.setFixedSize(QSize(20, 40))
+            color_button.setFixedSize(QSize(40, 35))
             color_button.color = color
             color_button.setStyleSheet("background-color: rgb(%d, %d, %d);" % color)
 
-            size_policy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
-            color_button.setSizePolicy(size_policy)
+            #size_policy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+            #color_button.setSizePolicy(size_policy)
 
             color_button.pressed.connect(lambda c = color: self.set_pen_color(c))
 
@@ -55,6 +55,11 @@ class Ui_EditWindow(QDialog):
         self.image = QImage(os.path.join(os.getcwd(), "pixelart.png"))
         self.original_image = self.image.copy()
 
+        if max(self.image.width(), self.image.height()) == self.image.width():
+            self.initial_zoom = (1024*0.7 / max(self.image.width(), self.image.height()))
+        else:
+            self.initial_zoom = (768*0.7 / max(self.image.width(), self.image.height()))
+
         #PIXMAP
         self.pixmap = QPixmap.fromImage(self.image)
 
@@ -74,7 +79,6 @@ class Ui_EditWindow(QDialog):
 
         self.button_color_select.clicked.connect(self.show_color_dialog)
         self.selected_color = Qt.black
-
         self.button_color_select.setFixedSize(QSize(120, 40))
 
         # COLOR PALETTE WIDGET
@@ -86,7 +90,7 @@ class Ui_EditWindow(QDialog):
         self.button_export.clicked.connect(self.export_image)
         self.button_export.setFixedSize(QSize(120, 40))
 
-        #BUTTON LAYOUTS
+        #LAYOUTS
         buttons_layout = QHBoxLayout()
         buttons_layout.addWidget(self.button_color_select)
         buttons_layout.addWidget(self.button_export)
