@@ -227,11 +227,13 @@ class Ui_MainWindow(QMainWindow):
 
             if (self.slider_colorcount.slider.value() != 0 and (self.mode_combobox.currentIndex() == 0 or self.mode_combobox.currentIndex() == 1)) or (self.mode_combobox.currentIndex() == 2 or self.mode_combobox.currentIndex() == 3):
 
-                if len(self.palette_reduced) > 20:
-                    palette_from_image = self.palette_reduced[0:20]
+                """ if len(self.palette_reduced) > 10:
+                    palette_from_image = self.palette_reduced[0:10]
 
                 else:
-                    palette_from_image = self.palette_reduced
+                    palette_from_image = self.palette_reduced """
+                
+                palette_from_image = self.palette_reduced
 
                 for i in range(len(palette_from_image)):
                     palette_from_image[i] = (palette_from_image[i][0], palette_from_image[i][1], palette_from_image[i][2])
