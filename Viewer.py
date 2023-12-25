@@ -61,9 +61,16 @@ class Viewer(QWidget, QRunnable):
     def set_image(self, file_path):
 
         if file_path == "":
-            return
+            return False
 
         file_format = imghdr.what(file_path)
+
+        print(file_format)
+
+        if file_format == None:
+            self.parent().statusBar().showMessage("Wczytany plik nie jest obrazem")
+            return False
+
         img = QPixmap(file_path, format = file_format)
 
         w, h = img.width(), img.height()
@@ -111,8 +118,6 @@ class Viewer(QWidget, QRunnable):
 
         for y in range(h):
             for x in range(w):
-
-                print(x, y)
 
                 r, g, b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
 

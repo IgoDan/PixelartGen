@@ -8,6 +8,7 @@ from Viewer import Viewer
 from Slider import Slider
 from ProcessingWindow import ProcessingWindow
 from Ui_EditWindow import Ui_EditWindow
+
 from colorthief import ColorThief
 
 class Ui_MainWindow(QMainWindow):
@@ -264,7 +265,10 @@ class Ui_MainWindow(QMainWindow):
             self.statusBar().showMessage("Nie udało się otworzyć pliku")
             return
         
-        self.viewer.set_image(openLocation)
+        result = self.viewer.set_image(openLocation)
+
+        if result == False:
+            return
 
         try:
             self.initialize_history()

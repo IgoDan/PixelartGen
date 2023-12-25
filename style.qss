@@ -59,6 +59,16 @@ QPushButton {
     min-width: 100px;
 }
 
+QPushButton:disabled {
+    background-color: #111111;
+    color: #666666;
+
+    border: 1px solid #444444;
+    border-radius: 1px;
+
+    min-width: 100px;
+}
+
 QPushButton:pressed {
     background-color: #294459;
     color: #999999;

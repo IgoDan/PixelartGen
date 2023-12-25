@@ -1,14 +1,16 @@
-import os
+import os, cv2
 
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem, QDialog, QVBoxLayout, QPushButton, QColorDialog, QHBoxLayout, QSizePolicy, QLabel
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem, QDialog, QVBoxLayout, QPushButton, QColorDialog, QHBoxLayout, QSizePolicy, QLabel, QFileDialog
 from PySide6.QtGui import QImage, QPixmap, QPainter, QColor, QPen
-from PySide6.QtCore import Qt, QSize, QRect
+from PySide6.QtCore import Qt, QSize
 
 from GraphicsView import GraphicsView
 from ColorPalette import ColorPalette
 from Slider import Slider
+from ExportDialog import ExportDialog
 
 class Ui_EditWindow(QDialog):
+
     def __init__(self, parent, palette):
 
         super().__init__(parent)
@@ -75,12 +77,12 @@ class Ui_EditWindow(QDialog):
 
         #EXPORT PIXELPERFECT BUTTON
         self.button_export_fast = QPushButton("Eksportuj - szybko", self)
-        self.button_export_fast.clicked.connect(self.export_image)
+        self.button_export_fast.clicked.connect(self.export_fast)
         self.button_export_fast.setFixedSize(QSize(120, 40))
 
         #EXPORT ORIGINAL RESOLUTION BUTTON
         self.button_export_custom = QPushButton("Eksportuj - dostosuj", self)
-        self.button_export_custom.clicked.connect(self.export_image)
+        self.button_export_custom.clicked.connect(self.export_custom)
         self.button_export_custom.setFixedSize(QSize(120, 40))
 
         #SINGLE LAYOUTS
@@ -140,7 +142,7 @@ class Ui_EditWindow(QDialog):
     def apply_alpha(self, color):
 
         red, green, blue = color.red(), color.green(), color.blue()
-        self.selected_color = QColor(red, green, blue, round(self.pen_opacity_slider.slider.value() * 2.55))
+        self.selected_color = QColor(red, green, blue, round(self.pen_opacity_slider.slider.value() * (255/self.pen_opacity_slider.slider.maximum())))
 
         self.pen.setColor(self.selected_color)
 
@@ -209,7 +211,45 @@ class Ui_EditWindow(QDialog):
         if event.button() == Qt.RightButton:
             self.is_erase_mode = False
 
-    def export_image(self):
-        #TODO
+    def export_fast(self):
+
+        if not os.path.exists("pixelart.png"):
+            self.parent().statusBar().showMessage("Nie można wyeksportować obrazu")
+            return
         
         print("Exporting image...")
+        
+        try:
+
+            saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
+            print(saveLocation[0])
+            self.image.save(saveLocation[0])
+
+            self.parent().statusBar().showMessage("Plik wyeksportowany pomyślnie")
+
+        except:
+            self.parent().statusBar().showMessage("Anulowano eksportowanie pliku")
+        
+        print("Image exported")
+
+    def export_custom(self):
+
+        dialog = ExportDialog(self)
+        result = dialog.exec_()
+
+        if result == QDialog.Accepted:
+
+            custom_resolution = dialog.get_resolution()
+            print("Custom Resolution:", custom_resolution)
+
+            scaled_image = self.image.scaled(*custom_resolution)
+
+            save_location, _ = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
+
+            if save_location:
+
+                scaled_image.save(save_location)
+
+                self.parent().statusBar().showMessage("Plik wyeksportowany pomyślnie")
+
+        dialog.deleteLater()
