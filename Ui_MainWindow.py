@@ -310,6 +310,11 @@ class Ui_MainWindow(QMainWindow):
     def apply_effects(self):
 
         if not os.path.exists("source.png"):
+
+            QMetaObject.invokeMethod(self.window_processing, "hide")
+
+            self.statusBar().showMessage("Nie udało się odczytywanie pliku źródłowego")
+
             return False
 
         self.viewer.copy_source()

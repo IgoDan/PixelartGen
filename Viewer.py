@@ -2,7 +2,7 @@ import cv2, imghdr, os, numpy as np
 
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QRect, QRunnable
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QImage
 
 class Viewer(QWidget):
 
@@ -11,6 +11,8 @@ class Viewer(QWidget):
         self.setAcceptDrops(True)
 
         self.layout = QVBoxLayout()
+
+        self.img = None
 
         self.source = QLabel()
         self.source.setGeometry(QRect(700, 50, 440, 330))
@@ -71,46 +73,69 @@ class Viewer(QWidget):
             self.parent().statusBar().showMessage("Wczytany plik nie jest obrazem")
             return False
 
-        img = QPixmap(file_path, format = file_format)
+        image = QPixmap(file_path, format = file_format)
 
-        w, h = img.width(), img.height()
+        w, h = image.width(), image.height()
 
         if w / h < self.source.width()/self.source.height():
-            self.source.setPixmap(img.scaledToHeight(self.source.height() - 10))
-            self.preview.setPixmap(img.scaledToHeight(self.source.height()- 10))
+            self.source.setPixmap(image.scaledToHeight(self.source.height() - 10))
+            self.preview.setPixmap(image.scaledToHeight(self.source.height()- 10))
         else:
-            self.source.setPixmap(img.scaledToWidth(self.source.width() - 10))
-            self.preview.setPixmap(img.scaledToWidth(self.source.width() - 10))
+            self.source.setPixmap(image.scaledToWidth(self.source.width() - 10))
+            self.preview.setPixmap(image.scaledToWidth(self.source.width() - 10))
 
         self.src = cv2.imread(file_path)
         cv2.imwrite("source.png", self.src)
 
     def set_preview(self):
-        img = QPixmap(os.getcwd() + "\pixelart.png")
 
-        w, h = img.width(), img.height()
+        print("start set_preview")
+
+        cv2.imwrite("pixelart.png", self.img)
+
+        pixmap = QPixmap(os.getcwd() + "\pixelart.png")
+
+        w, h = pixmap.width(), pixmap.height()
 
         if w / h < self.source.width()/self.source.height():
-            self.preview.setPixmap(img.scaledToHeight(self.source.height()- 10))
+            self.preview.setPixmap(pixmap.scaledToHeight(self.source.height()- 10))
         else:
-            self.preview.setPixmap(img.scaledToWidth(self.source.width() - 10))
+            self.preview.setPixmap(pixmap.scaledToWidth(self.source.width() - 10))
+
+        print("end set_preview")
+
+    def update_preview(self):
+
+        height, width, channel = self.img.shape
+        bytesPerLine = 3 * width
+        qimg = QImage(self.img.data, width, height, bytesPerLine, QImage.Format_RGB888)
+
+        pixmap = QPixmap(qimg)
+
+        w, h = pixmap.width(), pixmap.height()
+
+        if w / h < self.source.width()/self.source.height():
+            self.preview.setPixmap(pixmap.scaledToHeight(self.source.height()- 10))
+        else:
+            self.preview.setPixmap(pixmap.scaledToWidth(self.source.width() - 10))
 
     def copy_source(self):
-        img = cv2.imread(os.getcwd() + "\source.png")
-        cv2.imwrite("pixelart.png", img)
+
+        self.img = cv2.imread(os.getcwd() + "\source.png")
+        cv2.imwrite("pixelart.png", self.img)
+
+        print("copy_source ok")
 
     def pixelate(self, factor, resize):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
+        height, width = self.img.shape[:2]
 
-        height, width = img.shape[:2]
-
-        pixelart = cv2.resize(img, (int(width/factor), int(height/factor)), interpolation = cv2.INTER_LINEAR)
+        self.img = cv2.resize(self.img, (int(width/factor), int(height/factor)), interpolation = cv2.INTER_LINEAR)
 
         if resize == False:
-            pixelart = cv2.resize(pixelart, (width, height), interpolation=cv2.INTER_NEAREST)
+            self.img = cv2.resize(self.img, (width, height), interpolation=cv2.INTER_NEAREST)
 
-        cv2.imwrite("pixelart.png", pixelart)
+        print("pixelate ok")
 
     def dither_algorithm(self, img, reduced_colors, h, w):
 
@@ -151,15 +176,16 @@ class Viewer(QWidget):
                 if counter == 20000:
                     counter = 0
 
-                    cv2.imwrite("pixelart.png", img)
-                    self.set_preview()
+                    self.img = img
+                    self.update_preview()
+
+        print("dither alg ok")
 
         return img
 
     def color_reduce(self, count):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-        imgf = np.float32(img).reshape(-1, 3)
+        imgf = np.float32(self.img).reshape(-1, 3)
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
         compactness, label, center = cv2.kmeans(imgf, count, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
@@ -174,22 +200,18 @@ class Viewer(QWidget):
 
         pixelart = center[label.flatten()]
 
-        pixelart = pixelart.reshape(img.shape)
+        self.img = pixelart.reshape(self.img.shape)
 
-        cv2.imwrite("pixelart.png", pixelart)
+        print("color_reduce ok")
 
     def color_reduce_dither(self, count):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-
-        imgf = np.float32(img).reshape(-1, 3)
+        imgf = np.float32(self.img).reshape(-1, 3)
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 1.0)
         compactness, label, center = cv2.kmeans(imgf, count, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
 
         center = np.uint8(center)
-
-        counter = 0
 
         reduced_colors = center.tolist()
         self.parent().palette_reduced = reduced_colors
@@ -199,15 +221,11 @@ class Viewer(QWidget):
         for color in reduced_colors:
             color[0], color[1], color[2] = color[2], color[1], color[0]
 
-        h, w = img.shape[0], img.shape[1]
+        h, w = self.img.shape[0], self.img.shape[1]
 
-        img_dither = self.dither_algorithm(img, reduced_colors, h, w)
-
-        cv2.imwrite("pixelart.png", img_dither)
+        self.img = self.dither_algorithm(self.img, reduced_colors, h, w)
 
     def change_brightness(self, brightness):
-
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         brightness = brightness * (256 / self.parent().slider_brightness.slider.maximum())
 
@@ -222,13 +240,9 @@ class Viewer(QWidget):
         alphaBrightness = (highlight - shadow)/255
         gammaBrightness = shadow
 
-        img = cv2.addWeighted(img, alphaBrightness, img, 0, gammaBrightness)
-        
-        cv2.imwrite("pixelart.png", img)
+        self.img = cv2.addWeighted(self.img, alphaBrightness, self.img, 0, gammaBrightness)
 
     def change_contrast(self, contrast):
-
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
 
         contrast = contrast * (128 / self.parent().slider_contrast.slider.maximum())
 
@@ -236,15 +250,11 @@ class Viewer(QWidget):
         alphaContrast = float(f)
         gammaContrast = float(127 * (1 - f))
 
-        img = cv2.addWeighted(img, alphaContrast, img, 0, gammaContrast)
-
-        cv2.imwrite("pixelart.png", img)
+        self.img = cv2.addWeighted(self.img, alphaContrast, self.img, 0, gammaContrast)
 
     def change_saturation(self, value):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
 
         #SCALED SATURATION ADJUSTMENT
         """ len_y = len(hsv[:,:,1])
@@ -282,33 +292,23 @@ class Viewer(QWidget):
 
         hsv[:,:,1] = s
 
-        saturated = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-
-        cv2.imwrite("pixelart.png", saturated)
+        self.img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
     def smooth_image(self, factor):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-
         factor = 2 * factor - 1
 
-        smoothed = cv2.medianBlur(img, int(factor))
-
-        cv2.imwrite("pixelart.png", smoothed)
+        self.img = cv2.medianBlur(self.img, int(factor))
 
     def create_outline(self, thickness, threshold):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
         img_blurred = cv2.GaussianBlur(src=img_gray, ksize=(5, 5), sigmaX=0.5)
 
         edges = cv2.Canny(img_blurred, threshold, 255, L2gradient=False)
 
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(img, contours, -1, (0, 0, 0), thickness)
-
-        cv2.imwrite("pixelart.png", img)
+        cv2.drawContours(self.img, contours, -1, (0, 0, 0), thickness)
 
     def load_palette(self, dir):
         
@@ -346,41 +346,29 @@ class Viewer(QWidget):
 
 
     def ChangePalette(self, dir):
-
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
         
         reduced_colors = self.load_palette(dir)
         self.parent().palette_reduced = reduced_colors
 
-        h = img.shape[0]
-        w = img.shape[1]
+        h = self.img.shape[0]
+        w = self.img.shape[1]
 
         for y in range(0, h):
             for x in range(0, w):
-                r,g,b = img[y, x, 2], img[y, x, 1], img[y, x, 0]
+                r,g,b = self.img[y, x, 2], self.img[y, x, 1], self.img[y, x, 0]
 
                 new_color = self.find_closest_color(r, g, b, reduced_colors)
 
-                img[y, x, 2], img[y, x, 1], img[y, x, 0] = new_color
-
-        cv2.imwrite("pixelart.png", img)
-
-        self.set_preview()
+                self.img[y, x, 2], self.img[y, x, 1], self.img[y, x, 0] = new_color
 
     def ChangePaletteDither(self, dir):
 
-        img = cv2.imread(os.getcwd() + "\pixelart.png")
-        
         reduced_colors = self.load_palette(dir)
         self.parent().palette_reduced = reduced_colors
 
         print(reduced_colors)
 
-        h = img.shape[0]
-        w = img.shape[1]
+        h = self.img.shape[0]
+        w = self.img.shape[1]
 
-        img_dither = self.dither_algorithm(img, reduced_colors, h, w)
-
-        cv2.imwrite("pixelart.png", img_dither)
-
-        self.set_preview()
+        self.img = self.dither_algorithm(self.img, reduced_colors, h, w)
