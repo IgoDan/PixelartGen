@@ -1,4 +1,4 @@
-import os, cv2
+import os
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem, QDialog, QVBoxLayout, QPushButton, QColorDialog, QHBoxLayout, QSizePolicy, QLabel, QFileDialog
 from PySide6.QtGui import QImage, QPixmap, QPainter, QColor, QPen
@@ -51,7 +51,7 @@ class Ui_EditWindow(QDialog):
 
         #LABEL INFO
         self.info_label = QLabel(self)
-        self.info_label.setText("Lewy przycisk myszy - Pędzel\nPrawy przycisk myszy - Gumka")
+        self.info_label.setText("Lewy przycisk myszy - Pędzel\nPrawy przycisk myszy - Gumka\nScroll - Przybliżenie/oddalenie")
         self.info_label.setFixedSize(QSize(170, 60))
 
         #PEN THICKNESS SLIDER
@@ -146,7 +146,6 @@ class Ui_EditWindow(QDialog):
 
         self.pen.setColor(self.selected_color)
 
-
     def draw_pixel(self, x, y):
 
         painter = QPainter(self.image)
@@ -183,7 +182,8 @@ class Ui_EditWindow(QDialog):
 
             scene_pos = self.view.mapToScene(event.pos())
             x, y = int(scene_pos.x()), int(scene_pos.y())
-            self.last_x, self.last_y = x, y
+
+            self.previous_x, self.previous_y = x, y
             
         if event.button() == Qt.LeftButton and not self.is_erase_mode:
             self.draw_pixel(x, y)
@@ -219,20 +219,24 @@ class Ui_EditWindow(QDialog):
         
         print("Exporting image...")
         
-        try:
+        saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
+        print(saveLocation[0])
 
-            saveLocation = QFileDialog.getSaveFileName(self, "Save image", "image.png", "Image Files (*.png *.jpg *.bmp)")
-            print(saveLocation[0])
+        if saveLocation[0]:
             self.image.save(saveLocation[0])
 
             self.parent().statusBar().showMessage("Plik wyeksportowany pomyślnie")
 
-        except:
+        else:
             self.parent().statusBar().showMessage("Anulowano eksportowanie pliku")
         
         print("Image exported")
 
     def export_custom(self):
+
+        if not os.path.exists("pixelart.png"):
+            self.parent().statusBar().showMessage("Nie można wyeksportować obrazu")
+            return
 
         dialog = ExportDialog(self)
         result = dialog.exec_()
@@ -251,5 +255,13 @@ class Ui_EditWindow(QDialog):
                 scaled_image.save(save_location)
 
                 self.parent().statusBar().showMessage("Plik wyeksportowany pomyślnie")
+
+            else:
+
+                self.parent().statusBar().showMessage("Anulowano eksportowanie pliku")
+
+        else:
+
+            self.parent().statusBar().showMessage("Anulowano eksportowanie pliku")
 
         dialog.deleteLater()

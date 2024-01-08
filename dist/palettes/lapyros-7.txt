@@ -1,0 +1,42 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: Lapyro's 7
+;Description: Hi, there is my first color palette ! I introduce you 7 colors with each 5 shades.
+;Colors: 37
+FF330f35
+FF732c61
+FFa9385c
+FFe65d5d
+FFff9d70
+FF520606
+FFb94610
+FFe28218
+FFe6bd49
+FFe6dba2
+FF3a1b1b
+FF674a3d
+FFb19970
+FFdad1a1
+FFedefcd
+FF161f2b
+FF3d5a6c
+FF72a9a0
+FF93d2a7
+FFd8e5c9
+FF0a242d
+FF205f4e
+FF52a052
+FFacce73
+FFe6e4b2
+FF34314e
+FF5b4786
+FF7d8cc4
+FFa0d2db
+FFd1ecee
+FF22162b
+FF451f55
+FF724e91
+FFcd90d8
+FFe0bad7
+FF554156
+FFffffff

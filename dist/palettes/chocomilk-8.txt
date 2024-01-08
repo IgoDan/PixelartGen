@@ -1,0 +1,13 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: CHOCOMILK-8
+;Description: LA paleta de colores para colorear chocolate y leche
+;Colors: 8
+FFd6f5e4
+FFf7ffc5
+FFb4c788
+FF8a8969
+FF8b6a44
+FF62554c
+FF463c3c
+FF312629

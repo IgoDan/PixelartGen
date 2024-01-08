@@ -1,0 +1,13 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: Mahyellaw '22
+;Description: Made a self pixel portrait using my own palette, for the first time. :P
+;Colors: 8
+FF060b11
+FF0c1023
+FF10182e
+FF182634
+FF5e1a20
+FF8d402f
+FFbe794f
+FFe3b47a

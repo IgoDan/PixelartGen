@@ -1,0 +1,12 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: Blessing
+;Description: noun. God's favor and protection.
+This palette is composed by only highlights and no shadow colors, because in heaven there is no place for darkness. After overcoming the trial of using it, you'll be rewarded (hopefully) with the feeling that you became a more enlightened being.
+Palette created by <a href="https://twitter.com/MarukiHurakami" target="_blank">Maruki</a>.
+;Colors: 5
+FF74569b
+FF96fbc7
+FFf7ffae
+FFffb3cb
+FFd8bfd8

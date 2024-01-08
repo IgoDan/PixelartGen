@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QDialog, QLabel, QLineEdit, QVBoxLayout, QPushButton, QHBoxLayout, QCheckBox
 from PySide6.QtGui import QIntValidator
-from PySide6.QtCore import QSize
 
 class ExportDialog(QDialog):
     
@@ -13,8 +12,8 @@ class ExportDialog(QDialog):
         self.original_width = self.parent().parent().viewer.src.shape[1]
         self.original_height = self.parent().parent().viewer.src.shape[0]
 
-        self.resolution_width = self.parent().parent().viewer.src.shape[1]
-        self.resolution_height = self.parent().parent().viewer.src.shape[0]
+        self.resolution_width = self.parent().image.width()
+        self.resolution_height = self.parent().image.height()
 
         print(self.resolution_width, self.resolution_height)
 

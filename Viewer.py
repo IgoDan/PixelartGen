@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QRect, QRunnable
 from PySide6.QtGui import QPixmap
 
-class Viewer(QWidget, QRunnable):
+class Viewer(QWidget):
 
     def __init__(self, parent):
         super().__init__(parent)

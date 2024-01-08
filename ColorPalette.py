@@ -22,13 +22,14 @@ class ColorPalette(QWidget):
             color_button = QPushButton()
             color_button.setFixedSize(QSize(40, 40))
             color_button.color = color
-            color_button.setStyleSheet("background-color: rgb(%d, %d, %d);" % color)
+            color_button.setStyleSheet("color: #CCCCCC; background-color: rgb(%d, %d, %d);" % color)
+            color_button.setText("+")
 
-            color_button.pressed.connect(lambda c = color: self.set_pen_color(c))
+            color_button.pressed.connect(lambda c = color: self.set_color(c))
 
             layout.addWidget(color_button)
 
-    def set_pen_color(self, color):
+    def set_color(self, color):
 
         self.parent().set_pen_color(color)
         print("Selected color:", color)

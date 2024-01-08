@@ -72,3 +72,9 @@ def Pixelate(self, factor, resize):
 
         cv2.imwrite("pixelart.png", pixelart)
 ```
+
+# Building application to .exe
+
+```
+pyinstaller --onefile --add-data="style.qss:." --add-data="unchecked.png:." --add-data="checked.png:." --add-data="arrow.png:." main.py
+```

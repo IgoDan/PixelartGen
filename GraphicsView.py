@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import QGraphicsView
-
 from PySide6.QtGui import QPainter, QWheelEvent
 
 class GraphicsView(QGraphicsView):
